@@ -55,41 +55,7 @@ export interface GeneratorHistory {
   feedbackByPlanId: Record<string, PlanFeedback>;
 }
 
-type SessionId =
-  | "week1_mon_20min_4x5"
-  | "week1_tue_6x75"
-  | "week1_sat_500"
-  | "week2_mon_20min_4x5"
-  | "week2_tue_8x75"
-  | "week2_sat_600"
-  | "week3_mon_30min_3x10"
-  | "week3_tue_5x100_plus_fast"
-  | "week3_sat_800"
-  | "week4_mon_30min_3x10"
-  | "week4_tue_6x100_plus_fast"
-  | "week4_sat_900"
-  | "week5_mon_30min_3x10"
-  | "week5_tue_30min_far_as_can"
-  | "week5_sat_700"
-  | "week6_mon_30min_easy"
-  | "week6_tue_6x150_plus_fast"
-  | "week6_sat_800"
-  | "week7_mon_30min_easy"
-  | "week7_tue_5x200"
-  | "week7_sat_1000"
-  | "week8_mon_35min_easy"
-  | "week8_tue_6x200"
-  | "week8_sat_1200"
-  | "week9_mon_40min_2x20"
-  | "week9_tue_30_40min_far_as_can"
-  | "week9_sat_1300"
-  | "week10_mon_40min_easy"
-  | "week10_tue_8_10x100_race_pace"
-  | "week10_sat_1200"
-  | "week11_mon_30min_easy"
-  | "week11_tue_30min_continuous"
-  | "week11_sat_700"
-  | "week12_thu_20min_continuous";
+type SessionId = string;
 
 interface SwimSessionDefinition {
   id: SessionId;
@@ -420,6 +386,235 @@ const SESSION_LIBRARY: SwimSessionDefinition[] = [
     estimatedDistanceM: 800,
     description: "20 min continuous easy-effort freestyle.",
   },
+  // Beginner 2 mile highlights
+  {
+    id: "b2_week2_mon_25min_5x5",
+    label: "25 min free, 5x5 min",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1000,
+    description:
+      "25 min freestyle easy effort: 5 x 5 min swim with 2 min easy recovery between blocks.",
+  },
+  {
+    id: "b2_week2_tue_8x100",
+    label: "8x100m steady",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 800,
+    description: "8 x 100m steady effort with 60 sec recovery.",
+  },
+  {
+    id: "b2_week3_tue_4x200_plus_100_fast",
+    label: "4x200m + 100m fast",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 900,
+    description:
+      "4 x 200m with 90 sec recovery, then 90 sec easy recovery and finish with 100m fast recording time.",
+  },
+  {
+    id: "b2_week6_mon_15min_plus_5x100",
+    label: "15 min easy + 5x100m controlled",
+    durationBucket: 20,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1000,
+    description:
+      "15 mins easy effort with 3 min recovery, then 5 x 100m controlled effort with 90 sec recovery.",
+  },
+  {
+    id: "b2_week7_mon_40min_8x5",
+    label: "40 min free, 8x5 min",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1600,
+    description:
+      "40 mins freestyle, easy effort with 8 x 5 min swim and 2 min easy recovery.",
+  },
+  {
+    id: "b2_week7_sat_1400",
+    label: "1400m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1400,
+    description: "1400m easy continuous freestyle.",
+  },
+  {
+    id: "b2_week8_sat_750",
+    label: "750m easy continuous",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 750,
+    description: "750m easy continuous freestyle.",
+  },
+  {
+    id: "b2_week10_mon_20min_plus_5x100",
+    label: "20 min easy + 5x100m controlled",
+    durationBucket: 20,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1100,
+    description:
+      "20 mins easy effort with 3 min recovery, then 5 x 100m controlled effort with 90 sec recovery.",
+  },
+  {
+    id: "b2_week10_tue_10_12x100_race_pace",
+    label: "10–12x100m race pace",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 1200,
+    description:
+      "10–12 x 100m at race pace with 30–60 sec recovery between sets.",
+  },
+  {
+    id: "b2_week10_sat_1800_2000",
+    label: "1800–2000m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1900,
+    description: "1800–2000m easy continuous freestyle.",
+  },
+  {
+    id: "b2_week12_tue_3x100",
+    label: "3x100m controlled",
+    durationBucket: 20,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 300,
+    description: "3 x 100m controlled effort with 90 sec recovery.",
+  },
+  // Beginner 5km highlights
+  {
+    id: "b5k_week1_tue_6x100",
+    label: "6x100m steady",
+    durationBucket: 20,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 600,
+    description: "6 x 100m steady effort with 30–60 sec recovery.",
+  },
+  {
+    id: "b5k_week2_tue_10x100",
+    label: "10x100m steady",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1000,
+    description: "10 x 100m steady effort with 60 sec recovery.",
+  },
+  {
+    id: "b5k_week3_tue_8x200",
+    label: "8x200m steady",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1600,
+    description:
+      "8 x 200m steady effort with 90 sec recovery and an additional 90 sec easy recovery.",
+  },
+  {
+    id: "b5k_week5_mon_40min_4x10",
+    label: "40 min free, 4x10 min",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1600,
+    description:
+      "40 mins freestyle easy effort: 4 x 10 min swim with 90 sec easy recovery.",
+  },
+  {
+    id: "b5k_week6_tue_10x150_plus_fast",
+    label: "10x150m steady + 100m fast",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 1600,
+    description:
+      "10 x 150m steady effort with 20 sec recovery, then 90 sec recovery and 100m fast recording time.",
+  },
+  {
+    id: "b5k_week6_sat_2000",
+    label: "2000m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 2000,
+    description: "2000m easy continuous freestyle.",
+  },
+  {
+    id: "b5k_week7_mon_20min_plus_5x150",
+    label: "20 min continuous + 5x150m",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1700,
+    description:
+      "20 mins continuous easy effort, 3 min recovery, then 5 x 150m steady effort with 30 sec recovery.",
+  },
+  {
+    id: "b5k_week7_tue_45min_9x5",
+    label: "45 min free, 9x5 min",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1800,
+    description:
+      "45 mins freestyle easy effort with 9 x 5 min swim and 1 min easy recovery.",
+  },
+  {
+    id: "b5k_week7_sat_2400",
+    label: "2400m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 2400,
+    description: "2400m easy continuous freestyle.",
+  },
+  {
+    id: "b5k_week9_sat_3000",
+    label: "3000m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 3000,
+    description: "3000m easy continuous freestyle.",
+  },
+  {
+    id: "b5k_week10_sat_3500",
+    label: "3500m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 3500,
+    description: "3500m easy continuous freestyle.",
+  },
+  {
+    id: "b5k_week11_mon_60min_easy",
+    label: "60 min easy continuous",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 3000,
+    description: "60 mins continuous easy-effort swim.",
+  },
+  {
+    id: "b5k_week12_thu_15min_continuous",
+    label: "15 min continuous easy freestyle",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 600,
+    description: "15 mins freestyle continuous easy effort.",
+  },
 ];
 
 function getRecentSessionIds(
@@ -502,4 +697,3 @@ export function generatePlan(
     },
   };
 }
-

@@ -1,18 +1,8 @@
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CompletionForm } from "./CompletionForm";
-
-interface PlanRow {
-  id: string;
-  created_at: string;
-  status: "accepted" | "completed";
-  plan: {
-    segments: {
-      id: string;
-      description: string;
-    }[];
-  };
-}
+import { PlanCard } from "@/app/components/PlanCard";
+import type { PlanRow } from "@/lib/plan-types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function CompletePlanPage({
   params,
@@ -32,6 +22,7 @@ export default async function CompletePlanPage({
     .from("plans")
     .select("*")
     .eq("id", params.id)
+    .eq("user_id", user.id)
     .maybeSingle();
 
   if (!plan) {
@@ -39,31 +30,25 @@ export default async function CompletePlanPage({
   }
 
   const typedPlan = plan as unknown as PlanRow;
-  const firstSegment = typedPlan.plan.segments?.[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">
-          How was this session?
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight">Complete session</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Add a quick rating and a few tags so future plans can avoid repetition
-          and lean into what you like.
+          Quick rating, tags, and optional notes so the next session can adapt.
         </p>
       </div>
 
-      {firstSegment && (
-        <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-400">
-            Plan preview
-          </p>
-          <p className="mt-1 text-slate-100">{firstSegment.description}</p>
-        </div>
-      )}
+      <PlanCard
+        title="Session recap"
+        request={typedPlan.request}
+        plan={typedPlan.plan}
+        createdAt={typedPlan.created_at}
+        status={typedPlan.status === "completed" ? "completed" : "in_progress"}
+      />
 
       <CompletionForm planId={typedPlan.id} />
     </div>
   );
 }
-

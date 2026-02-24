@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { TopNav } from '@/app/components/TopNav';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
             <p className="mt-1 text-sm text-slate-400">
               Generate quick, personalized swim sessions.
             </p>
+            <TopNav />
           </header>
           <main className="flex-1">{children}</main>
         </div>
@@ -27,4 +29,3 @@ export default function RootLayout({
     </html>
   );
 }
-

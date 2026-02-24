@@ -35,7 +35,7 @@ export function OnboardingForm({ initialLevel }: OnboardingFormProps) {
         return;
       }
 
-      router.push("/plans/generate");
+      router.push("/");
     } catch {
       setError("Something went wrong. Please try again.");
       setSaving(false);
@@ -121,4 +121,3 @@ export function OnboardingForm({ initialLevel }: OnboardingFormProps) {
     </form>
   );
 }
-
