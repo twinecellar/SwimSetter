@@ -22,12 +22,15 @@ export function TopNav() {
         const active =
           link.href === "/"
             ? pathname === "/"
-            : pathname === link.href || pathname.startsWith(`${link.href}/`);
+            : link.href === "/plans"
+              ? pathname === "/plans" || /^\/plans\/[^/]+\/complete$/.test(pathname)
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
         return (
           <Link
             key={link.href}
             href={link.href}
+            prefetch={false}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               active
                 ? "bg-sky-500 text-slate-950"

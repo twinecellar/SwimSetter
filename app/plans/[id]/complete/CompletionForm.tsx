@@ -58,6 +58,11 @@ export function CompletionForm({ planId }: CompletionFormProps) {
 
       if (!response.ok) {
         const json = await response.json().catch(() => ({}));
+        if (response.status === 429 || json.code === "OVER_REQUEST_RATE_LIMIT") {
+          setError("Too many auth requests. Wait about a minute, then retry.");
+          setSaving(false);
+          return;
+        }
         setError(json.error ?? "Failed to save completion.");
         setSaving(false);
         return;

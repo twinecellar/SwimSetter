@@ -5,6 +5,7 @@ import { HistoryList } from "@/app/components/HistoryList";
 import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
 import type { CompletionRow, PlanRow } from "@/lib/plan-types";
 import { completionByPlanId } from "@/lib/plan-utils";
+import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function HomePage({
@@ -13,9 +14,18 @@ export default async function HomePage({
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, rateLimited } = await getUserWithRateLimitHandling(supabase);
+
+  if (rateLimited) {
+    return (
+      <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+        <h2 className="text-xl font-semibold tracking-tight">Home</h2>
+        <p className="text-sm text-amber-200">
+          Too many auth requests right now. Wait about a minute, then refresh.
+        </p>
+      </div>
+    );
+  }
 
   if (!user) {
     redirect("/auth");
@@ -105,6 +115,7 @@ export default async function HomePage({
           actions={
             <Link
               href={`/plans/${currentPlan.id}/complete`}
+              prefetch={false}
               className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
               style={{
                 backgroundColor: "#f59e0b",
@@ -130,12 +141,14 @@ export default async function HomePage({
             <>
               <Link
                 href="/plans/generate?from=home"
+                prefetch={false}
                 className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"
               >
                 Generate next session
               </Link>
               <Link
                 href="/plans"
+                prefetch={false}
                 className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500"
               >
                 View history
@@ -153,6 +166,7 @@ export default async function HomePage({
           </p>
           <Link
             href="/plans/generate?from=home"
+            prefetch={false}
             className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"
           >
             Generate your first session
@@ -164,7 +178,11 @@ export default async function HomePage({
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold tracking-tight text-slate-100">Recent sessions</h3>
-            <Link href="/plans" className="text-sm font-medium text-sky-400 hover:text-sky-300">
+            <Link
+              href="/plans"
+              prefetch={false}
+              className="text-sm font-medium text-sky-400 hover:text-sky-300"
+            >
               View all
             </Link>
           </div>

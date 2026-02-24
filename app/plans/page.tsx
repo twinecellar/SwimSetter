@@ -4,13 +4,23 @@ import { HistoryList } from "@/app/components/HistoryList";
 import { PlanCard } from "@/app/components/PlanCard";
 import type { CompletionRow, PlanRow } from "@/lib/plan-types";
 import { completionByPlanId } from "@/lib/plan-utils";
+import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function PlansPage() {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, rateLimited } = await getUserWithRateLimitHandling(supabase);
+
+  if (rateLimited) {
+    return (
+      <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
+        <h2 className="text-xl font-semibold tracking-tight">Session history</h2>
+        <p className="text-sm text-slate-300">
+          Too many auth requests right now. Wait about a minute, then refresh.
+        </p>
+      </div>
+    );
+  }
 
   if (!user) {
     redirect("/auth");
@@ -56,6 +66,7 @@ export default async function PlansPage() {
         <p className="text-sm text-slate-400">No accepted or completed sessions yet.</p>
         <Link
           href="/plans/generate"
+          prefetch={false}
           className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"
         >
           Generate your first session
@@ -73,7 +84,11 @@ export default async function PlansPage() {
             Review recent sessions and jump back into your current one.
           </p>
         </div>
-        <Link href="/plans/generate" className="text-sm font-medium text-sky-400 hover:text-sky-300">
+        <Link
+          href="/plans/generate"
+          prefetch={false}
+          className="text-sm font-medium text-sky-400 hover:text-sky-300"
+        >
           Generate new
         </Link>
       </div>
@@ -90,6 +105,7 @@ export default async function PlansPage() {
             actions={
               <Link
                 href={`/plans/${currentPlan.id}/complete`}
+                prefetch={false}
                 className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
                 style={{
                   backgroundColor: "#f59e0b",

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getUserWithRateLimitHandling } from '@/lib/supabase/auth';
 import {
   generatePlan,
   type GeneratorHistory,
@@ -9,12 +10,16 @@ import {
 
 export async function POST(request: Request) {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError
-  } = await supabase.auth.getUser();
+  const { user, rateLimited } = await getUserWithRateLimitHandling(supabase);
 
-  if (authError || !user) {
+  if (rateLimited) {
+    return NextResponse.json(
+      { error: 'Too many auth requests', code: 'OVER_REQUEST_RATE_LIMIT' },
+      { status: 429 }
+    );
+  }
+
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -88,4 +93,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ plan, request: requestInput });
 }
-

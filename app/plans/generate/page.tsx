@@ -28,6 +28,15 @@ export default function GeneratePlanPage() {
         router.replace("/auth");
         return;
       }
+      if (response.status === 429) {
+        setError("Too many auth requests. Wait about a minute, then retry.");
+        return;
+      }
+
+      if (!response.ok) {
+        setError("Unable to load profile data. Please retry.");
+        return;
+      }
 
       const json = (await response.json()) as {
         profile: { id: string } | null;
@@ -68,6 +77,10 @@ export default function GeneratePlanPage() {
 
       if (!response.ok) {
         const json = await response.json().catch(() => ({}));
+        if (response.status === 429 || json.code === "OVER_REQUEST_RATE_LIMIT") {
+          setError("Too many auth requests. Wait about a minute, then retry.");
+          return;
+        }
         if (json.code === "NO_PROFILE") {
           router.push("/onboarding");
           return;
@@ -103,6 +116,10 @@ export default function GeneratePlanPage() {
 
       if (!response.ok) {
         const json = await response.json().catch(() => ({}));
+        if (response.status === 429 || json.code === "OVER_REQUEST_RATE_LIMIT") {
+          setError("Too many auth requests. Wait about a minute, then retry.");
+          return;
+        }
         setError(json.error ?? "Failed to accept plan.");
         return;
       }

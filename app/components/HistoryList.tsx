@@ -33,6 +33,7 @@ export function HistoryList({
               plan.status === "completed" ? (
                 <Link
                   href={`/plans/${plan.id}/complete`}
+                  prefetch={false}
                   className="inline-flex items-center rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-sky-500 hover:text-sky-300"
                 >
                   Rate session
@@ -40,6 +41,7 @@ export function HistoryList({
               ) : (
                 <Link
                   href={`/plans/${plan.id}/complete`}
+                  prefetch={false}
                   className="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium"
                   style={{
                     backgroundColor: "#f59e0b",

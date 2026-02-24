@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { CompletionForm } from "./CompletionForm";
 import { PlanCard } from "@/app/components/PlanCard";
 import type { PlanRow } from "@/lib/plan-types";
+import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function CompletePlanPage({
@@ -10,9 +11,18 @@ export default async function CompletePlanPage({
   params: { id: string };
 }) {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, rateLimited } = await getUserWithRateLimitHandling(supabase);
+
+  if (rateLimited) {
+    return (
+      <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
+        <h2 className="text-xl font-semibold tracking-tight">Rate Session</h2>
+        <p className="text-sm text-slate-300">
+          Too many auth requests right now. Wait about a minute, then refresh.
+        </p>
+      </div>
+    );
+  }
 
   if (!user) {
     redirect("/auth");
