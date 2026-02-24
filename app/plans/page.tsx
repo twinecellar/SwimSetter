@@ -90,9 +90,14 @@ export default async function PlansPage() {
             actions={
               <Link
                 href={`/plans/${currentPlan.id}/complete`}
-                className="inline-flex items-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-400"
+                className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
+                style={{
+                  backgroundColor: "#f59e0b",
+                  borderColor: "#f59e0b",
+                  color: "#111827",
+                }}
               >
-                Complete now
+                Finish
               </Link>
             }
           />

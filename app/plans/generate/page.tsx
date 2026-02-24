@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GenerateControls } from "@/app/components/GenerateControls";
 import { PlanCard } from "@/app/components/PlanCard";
@@ -140,7 +139,12 @@ export default function GeneratePlanPage() {
             type="button"
             onClick={handleGenerate}
             disabled={generating || accepting}
-            className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60"
+            className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"
+            style={{
+              backgroundColor: "#10b981",
+              borderColor: "#10b981",
+              color: "#111827",
+            }}
           >
             {generating ? "Generating..." : plan ? "Regenerate" : "Generate session"}
           </button>
@@ -156,12 +160,6 @@ export default function GeneratePlanPage() {
             </button>
           )}
 
-          <Link
-            href="/"
-            className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500"
-          >
-            Back to home
-          </Link>
         </div>
 
         <p className="text-xs text-slate-400">Current controls: {controlsSummary}</p>

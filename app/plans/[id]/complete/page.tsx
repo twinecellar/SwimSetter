@@ -34,9 +34,9 @@ export default async function CompletePlanPage({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Complete session</h2>
+        <h2 className="text-xl font-semibold tracking-tight">Rate Session</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Quick rating, tags, and optional notes so the next session can adapt.
+          Rate this session quickly, add tags, and include notes only if useful.
         </p>
       </div>
 

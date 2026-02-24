@@ -10,12 +10,10 @@ interface CompletionFormProps {
 
 const SUGGESTED_TAGS = [
   "fun",
-  "tough",
   "easy",
-  "speedy",
-  "drills",
-  "kicking",
-  "endurance",
+  "hard",
+  "long",
+  "short",
 ];
 
 export function CompletionForm({ planId }: CompletionFormProps) {
@@ -72,6 +70,24 @@ export function CompletionForm({ planId }: CompletionFormProps) {
     }
   }
 
+  const secondaryButtonStyle = {
+    backgroundColor: "#162447",
+    borderColor: "#334155",
+    color: "#e2e8f0",
+  };
+
+  const noteToggleStyle = {
+    backgroundColor: "#0f172a",
+    borderColor: "#334155",
+    color: "#cbd5e1",
+  };
+
+  const noteFieldStyle = {
+    backgroundColor: "#0b1736",
+    borderColor: "#334155",
+    color: "#f8fafc",
+  };
+
   return (
     <form
       onSubmit={(event) => {
@@ -80,25 +96,30 @@ export function CompletionForm({ planId }: CompletionFormProps) {
       }}
       className="space-y-6"
     >
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-200">Rating</label>
-        <div className="flex gap-2">
+      <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/30 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <label className="block text-sm font-medium text-slate-200">Rating</label>
+          <p className="text-sm font-medium text-slate-300">{rating ?? 0}/5</p>
+        </div>
+        <div className="flex gap-1.5">
           {[1, 2, 3, 4, 5].map((value) => (
             <button
               key={value}
               type="button"
               onClick={() => setRating(value)}
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
-                rating === value
-                  ? "bg-emerald-500 text-slate-950"
-                  : "bg-slate-900 text-slate-200 hover:bg-slate-800"
-              }`}
+              aria-label={`Rate ${value} out of 5`}
+              className="flex h-11 w-11 items-center justify-center rounded-md border text-2xl leading-none transition-colors"
+              style={{
+                backgroundColor: "#0b1736",
+                borderColor: "#334155",
+                color: rating && value <= rating ? "#fbbf24" : "#64748b",
+              }}
             >
-              {value}
+              ★
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
       <CompletionTags
         selected={tags}
@@ -109,13 +130,14 @@ export function CompletionForm({ planId }: CompletionFormProps) {
         onAddCustomTag={addCustomTag}
       />
 
-      <div className="space-y-2">
+      <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/30 p-4">
         <button
           type="button"
           onClick={() => setNotesOpen((prev) => !prev)}
-          className="text-sm font-medium text-slate-200 underline decoration-slate-500 underline-offset-4 hover:text-sky-300"
+          className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium"
+          style={noteToggleStyle}
         >
-          {notesOpen ? "Hide notes" : "Add optional notes"}
+          {notesOpen ? "Hide notes" : "Any notes?"}
         </button>
 
         {notesOpen && (
@@ -125,9 +147,10 @@ export function CompletionForm({ planId }: CompletionFormProps) {
             rows={3}
             className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
             placeholder="Anything you want to remember for next time?"
+            style={noteFieldStyle}
           />
         )}
-      </div>
+      </section>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
@@ -142,16 +165,9 @@ export function CompletionForm({ planId }: CompletionFormProps) {
         <button
           type="button"
           disabled={saving}
-          onClick={() => void saveCompletion(false)}
-          className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-sky-500 disabled:opacity-60"
-        >
-          Skip notes and save
-        </button>
-        <button
-          type="button"
-          disabled={saving}
           onClick={() => router.push("/?return=completion")}
           className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 disabled:opacity-60"
+          style={secondaryButtonStyle}
         >
           Cancel
         </button>

@@ -17,6 +17,18 @@ export function CompletionTags({
   onCustomTagChange,
   onAddCustomTag,
 }: CompletionTagsProps) {
+  const fieldStyle = {
+    backgroundColor: "#0b1736",
+    borderColor: "#334155",
+    color: "#f8fafc",
+  };
+
+  const actionStyle = {
+    backgroundColor: "#162447",
+    borderColor: "#334155",
+    color: "#e2e8f0",
+  };
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-200">
@@ -35,8 +47,9 @@ export function CompletionTags({
             className={`rounded-full px-3 py-1 ${
               selected.includes(tag)
                 ? "bg-sky-500 text-slate-950"
-                : "bg-slate-900 text-slate-200 hover:bg-slate-800"
+                : "bg-slate-900 text-slate-200"
             }`}
+            style={!selected.includes(tag) ? actionStyle : undefined}
           >
             {tag}
           </button>
@@ -50,11 +63,13 @@ export function CompletionTags({
           onChange={(event) => onCustomTagChange(event.target.value)}
           placeholder="Custom tag"
           className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
+          style={fieldStyle}
         />
         <button
           type="button"
           onClick={onAddCustomTag}
           className="rounded-md border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-sky-500"
+          style={actionStyle}
         >
           Add
         </button>

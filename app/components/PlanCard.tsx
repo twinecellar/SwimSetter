@@ -22,18 +22,30 @@ export function PlanCard({
   actions,
 }: PlanCardProps) {
   const firstSegment = plan.segments[0];
+  const ratingValue = completion?.rating ?? null;
+  const ratingStars =
+    ratingValue && ratingValue > 0
+      ? `${"★".repeat(ratingValue)}${"☆".repeat(5 - ratingValue)}`
+      : null;
+
+  const requestTokenStyle = {
+    backgroundColor: "#0b1736",
+    borderColor: "#1e3a5f",
+    color: "#c7d8ee",
+  };
+
+  const feedbackTokenStyle = {
+    backgroundColor: "#132b1f",
+    borderColor: "#1f5d46",
+    color: "#b6efd2",
+  };
 
   return (
     <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-slate-100">{title}</p>
-          <p className="mt-1 text-xs text-slate-400">
-            ~{plan.estimated_distance_m}m · {plan.duration_minutes} min
-            {request
-              ? ` · ${request.effort} · ${request.fun_mode}`
-              : ""}
-          </p>
+          <p className="mt-1 text-xs text-slate-400">~{plan.estimated_distance_m}m planned</p>
           {createdAt && (
             <p className="mt-1 text-xs text-slate-500">{formatSessionDate(createdAt)}</p>
           )}
@@ -41,13 +53,57 @@ export function PlanCard({
         {status && <SessionStatusBadge status={status} />}
       </div>
 
+      {request && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">INPUTS</p>
+          <div className="flex flex-wrap gap-2">
+            <span
+              className="rounded-full border px-3 py-1 text-xs font-medium"
+              style={requestTokenStyle}
+            >
+              {request.duration_minutes} min
+            </span>
+            <span
+              className="rounded-full border px-3 py-1 text-xs font-medium capitalize"
+              style={requestTokenStyle}
+            >
+              {request.effort}
+            </span>
+            <span
+              className="rounded-full border px-3 py-1 text-xs font-medium"
+              style={requestTokenStyle}
+            >
+              {request.fun_mode}
+            </span>
+          </div>
+        </div>
+      )}
+
       {firstSegment && <p className="text-sm text-slate-200">{firstSegment.description}</p>}
 
       {completion && (
-        <p className="text-xs text-slate-400">
-          {completion.rating ? `Rating ${completion.rating}/5` : "No rating"}
-          {completion.tags.length > 0 ? ` · ${completion.tags.slice(0, 3).join(", ")}` : ""}
-        </p>
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">RATING</p>
+          <div className="flex flex-wrap gap-2">
+            <span
+              className="rounded-full border px-3 py-1 text-xs font-medium"
+              style={feedbackTokenStyle}
+            >
+              {ratingStars
+                ? `${ratingStars} (${completion.rating}/5)`
+                : "Not rated"}
+            </span>
+            {completion.tags.slice(0, 5).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border px-3 py-1 text-xs font-medium"
+                style={feedbackTokenStyle}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

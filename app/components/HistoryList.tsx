@@ -30,14 +30,26 @@ export function HistoryList({
             status={plan.status === "completed" ? "completed" : "planned"}
             completion={completion}
             actions={
-              <>
+              plan.status === "completed" ? (
                 <Link
                   href={`/plans/${plan.id}/complete`}
                   className="inline-flex items-center rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-sky-500 hover:text-sky-300"
                 >
-                  {plan.status === "completed" ? "Edit feedback" : "Complete now"}
+                  Rate session
                 </Link>
-              </>
+              ) : (
+                <Link
+                  href={`/plans/${plan.id}/complete`}
+                  className="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: "#f59e0b",
+                    borderColor: "#f59e0b",
+                    color: "#111827",
+                  }}
+                >
+                  Finish
+                </Link>
+              )
             }
           />
         );

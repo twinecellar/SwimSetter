@@ -13,13 +13,40 @@ export function GenerateControls({
   disabled = false,
   onChange,
 }: GenerateControlsProps) {
+  function getControlStyles(selected: boolean) {
+    const stateStyles = selected
+      ? {
+          backgroundColor: "#0ea5e9",
+          color: "#020617",
+          borderColor: "#0ea5e9",
+        }
+      : {
+          backgroundColor: "#0f172a",
+          color: "#e2e8f0",
+          borderColor: "#1e293b",
+        };
+
+    return {
+      ...stateStyles,
+      width: "100%",
+      minHeight: "3rem",
+      whiteSpace: "nowrap" as const,
+      display: "flex",
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+    };
+  }
+
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Duration
         </p>
-        <div className="mt-2 flex gap-2">
+        <div
+          className="mt-2 grid gap-2"
+          style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}
+        >
           {[20, 30].map((minutes) => (
             <button
               key={minutes}
@@ -31,11 +58,8 @@ export function GenerateControls({
                   duration_minutes: minutes as 20 | 30,
                 })
               }
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                value.duration_minutes === minutes
-                  ? "bg-sky-500 text-slate-950"
-                  : "bg-slate-900 text-slate-200 hover:bg-slate-800"
-              } disabled:opacity-60`}
+              className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-60"
+              style={getControlStyles(value.duration_minutes === minutes)}
             >
               {minutes} min
             </button>
@@ -47,7 +71,10 @@ export function GenerateControls({
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Effort
         </p>
-        <div className="mt-2 flex gap-2">
+        <div
+          className="mt-2 grid gap-2"
+          style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+        >
           {(["easy", "medium", "hard"] as Effort[]).map((effort) => (
             <button
               key={effort}
@@ -59,11 +86,8 @@ export function GenerateControls({
                   effort,
                 })
               }
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${
-                value.effort === effort
-                  ? "bg-sky-500 text-slate-950"
-                  : "bg-slate-900 text-slate-200 hover:bg-slate-800"
-              } disabled:opacity-60`}
+              className="rounded-md border px-3 py-1.5 text-sm capitalize disabled:opacity-60"
+              style={getControlStyles(value.effort === effort)}
             >
               {effort}
             </button>
@@ -75,7 +99,10 @@ export function GenerateControls({
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Style
         </p>
-        <div className="mt-2 flex gap-2">
+        <div
+          className="mt-2 grid gap-2"
+          style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}
+        >
           {([
             { value: "straightforward", label: "Straightforward" },
             { value: "fun", label: "Fun / varied" },
@@ -90,11 +117,8 @@ export function GenerateControls({
                   fun_mode: mode.value,
                 })
               }
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                value.fun_mode === mode.value
-                  ? "bg-sky-500 text-slate-950"
-                  : "bg-slate-900 text-slate-200 hover:bg-slate-800"
-              } disabled:opacity-60`}
+              className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-60"
+              style={getControlStyles(value.fun_mode === mode.value)}
             >
               {mode.label}
             </button>

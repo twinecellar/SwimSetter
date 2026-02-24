@@ -67,7 +67,7 @@ export default async function HomePage({
     <div className="space-y-6">
       <section className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Your swim dashboard</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Home</h2>
           <p className="mt-1 text-sm text-slate-400">
             {sessionState === "planned_session"
               ? "You have a current session ready to complete."
@@ -103,26 +103,17 @@ export default async function HomePage({
           createdAt={currentPlan.created_at}
           status={returnedFromCompletion ? "in_progress" : "planned"}
           actions={
-            <>
-              <Link
-                href={`/plans/${currentPlan.id}/complete`}
-                className="inline-flex items-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-400"
-              >
-                {returnedFromCompletion ? "Continue completion" : "Complete now"}
-              </Link>
-              <Link
-                href="/plans/generate?from=home"
-                className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-sky-500"
-              >
-                Generate another
-              </Link>
-              <Link
-                href="/plans"
-                className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500"
-              >
-                View history
-              </Link>
-            </>
+            <Link
+              href={`/plans/${currentPlan.id}/complete`}
+              className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
+              style={{
+                backgroundColor: "#f59e0b",
+                borderColor: "#f59e0b",
+                color: "#111827",
+              }}
+            >
+              {returnedFromCompletion ? "Continue completion" : "Finish"}
+            </Link>
           }
         />
       )}
