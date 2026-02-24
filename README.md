@@ -1,2 +1,2 @@
 # SwimSetter
-Simply swim plans on the fly
+Simple swim plans on the fly
