@@ -1,6 +1,6 @@
-export type SwimLevel = 'beginner' | 'intermediate' | 'advanced';
-export type EffortLevel = 'easy' | 'medium' | 'hard';
-export type FunMode = 'straightforward' | 'fun';
+export type SwimLevel = "beginner" | "intermediate" | "advanced";
+export type EffortLevel = "easy" | "medium" | "hard";
+export type FunMode = "straightforward" | "fun";
 
 export interface Profile {
   id: string;
@@ -16,9 +16,9 @@ export interface PlanRequest {
 
 export interface PlanSegment {
   id: string;
-  type: 'warmup' | 'technique' | 'endurance' | 'speed' | 'cooldown';
+  type: "session";
   distance_m: number;
-  stroke: 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly' | 'mixed';
+  stroke: "mixed";
   description: string;
   effort: EffortLevel;
   repeats?: number;
@@ -31,7 +31,7 @@ export interface GeneratedPlan {
   segments: PlanSegment[];
   notes?: string;
   metadata: {
-    version: 'v1';
+    version: "v1";
     swim_level: SwimLevel;
     input_effort: EffortLevel;
     input_fun_mode: FunMode;
@@ -55,476 +55,377 @@ export interface GeneratorHistory {
   feedbackByPlanId: Record<string, PlanFeedback>;
 }
 
-type TemplateKey = `${SwimLevel}_${20 | 30}_${EffortLevel}`;
+type SessionId =
+  | "week1_mon_20min_4x5"
+  | "week1_tue_6x75"
+  | "week1_sat_500"
+  | "week2_mon_20min_4x5"
+  | "week2_tue_8x75"
+  | "week2_sat_600"
+  | "week3_mon_30min_3x10"
+  | "week3_tue_5x100_plus_fast"
+  | "week3_sat_800"
+  | "week4_mon_30min_3x10"
+  | "week4_tue_6x100_plus_fast"
+  | "week4_sat_900"
+  | "week5_mon_30min_3x10"
+  | "week5_tue_30min_far_as_can"
+  | "week5_sat_700"
+  | "week6_mon_30min_easy"
+  | "week6_tue_6x150_plus_fast"
+  | "week6_sat_800"
+  | "week7_mon_30min_easy"
+  | "week7_tue_5x200"
+  | "week7_sat_1000"
+  | "week8_mon_35min_easy"
+  | "week8_tue_6x200"
+  | "week8_sat_1200"
+  | "week9_mon_40min_2x20"
+  | "week9_tue_30_40min_far_as_can"
+  | "week9_sat_1300"
+  | "week10_mon_40min_easy"
+  | "week10_tue_8_10x100_race_pace"
+  | "week10_sat_1200"
+  | "week11_mon_30min_easy"
+  | "week11_tue_30min_continuous"
+  | "week11_sat_700"
+  | "week12_thu_20min_continuous";
 
-interface TemplateDefinition {
-  baseSegments: PlanSegment[];
+interface SwimSessionDefinition {
+  id: SessionId;
+  label: string;
+  durationBucket: 20 | 30;
+  effort: EffortLevel;
+  fun_mode: FunMode | "either";
+  estimatedDistanceM: number;
+  description: string;
 }
 
-const BASE_TEMPLATES: Record<TemplateKey, TemplateDefinition> = {
-  beginner_20_easy: {
-    baseSegments: [
-      {
-        id: 'warmup_easy_200_free',
-        type: 'warmup',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '4 x 50m easy freestyle, 15s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'technique_4x25_drill',
-        type: 'technique',
-        distance_m: 100,
-        stroke: 'freestyle',
-        description: '4 x 25m choice drill, 20s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'cooldown_easy_100_free',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'freestyle',
-        description: '100m easy freestyle, relaxed breathing',
-        effort: 'easy'
-      }
-    ]
+const SESSION_LIBRARY: SwimSessionDefinition[] = [
+  {
+    id: "week1_mon_20min_4x5",
+    label: "20 min free, 4x5 min",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 800,
+    description:
+      "20 min freestyle easy effort: 4 x 5 min swim with 2 min easy recovery between each block.",
   },
-  beginner_20_medium: {
-    baseSegments: [
-      {
-        id: 'warmup_200_mix_easy',
-        type: 'warmup',
-        distance_m: 200,
-        stroke: 'mixed',
-        description: '100m easy free + 100m backstroke',
-        effort: 'easy'
-      },
-      {
-        id: 'endurance_4x50_steady',
-        type: 'endurance',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '4 x 50m steady freestyle, 20s rest',
-        effort: 'medium'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m easy choice stroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week1_tue_6x75",
+    label: "6x75m steady",
+    durationBucket: 20,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 450,
+    description: "6 x 75m steady effort with 30 sec recovery.",
   },
-  beginner_20_hard: {
-    baseSegments: [
-      {
-        id: 'warmup_200_free_buoy',
-        type: 'warmup',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '200m easy freestyle with pull buoy',
-        effort: 'easy'
-      },
-      {
-        id: 'speed_8x25_build',
-        type: 'speed',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '8 x 25m build to fast, 20s rest',
-        effort: 'hard'
-      },
-      {
-        id: 'cooldown_100_back',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'backstroke',
-        description: '100m easy backstroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week1_sat_500",
+    label: "500m easy continuous",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 500,
+    description: "500m easy continuous freestyle, relaxed technique focus.",
   },
-  beginner_30_easy: {
-    baseSegments: [
-      {
-        id: 'warmup_300_mix_easy',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'mixed',
-        description: '3 x 100m easy (free, back, free), 15s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'technique_4x50_drill_swim',
-        type: 'technique',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '4 x 50m (25 drill / 25 swim), 20s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'cooldown_100_choice_long',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m very easy choice stroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week2_mon_20min_4x5",
+    label: "20 min free, 4x5 min (repeat)",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 800,
+    description:
+      "20 min freestyle easy effort: 4 x 5 min swim with 2 min easy recovery between each block.",
   },
-  beginner_30_medium: {
-    baseSegments: [
-      {
-        id: 'warmup_300_free_easy',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'freestyle',
-        description: '300m easy freestyle, breathe every 3 strokes',
-        effort: 'easy'
-      },
-      {
-        id: 'endurance_6x50_steady',
-        type: 'endurance',
-        distance_m: 300,
-        stroke: 'freestyle',
-        description: '6 x 50m steady freestyle, 20s rest',
-        effort: 'medium'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m easy choice stroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week2_tue_8x75",
+    label: "8x75m steady",
+    durationBucket: 20,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 600,
+    description: "8 x 75m steady effort with 30 sec recovery.",
   },
-  beginner_30_hard: {
-    baseSegments: [
-      {
-        id: 'warmup_300_mix',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'mixed',
-        description: '3 x 100m (50 free / 50 back), 15s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'speed_8x25_fast',
-        type: 'speed',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '8 x 25m fast, 25s rest',
-        effort: 'hard'
-      },
-      {
-        id: 'endurance_4x50_steady',
-        type: 'endurance',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '4 x 50m steady freestyle, 20s rest',
-        effort: 'medium'
-      },
-      {
-        id: 'cooldown_100_back',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'backstroke',
-        description: '100m easy backstroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week2_sat_600",
+    label: "600m easy continuous",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 600,
+    description: "600m easy continuous freestyle.",
   },
-  intermediate_20_easy: {
-    baseSegments: [
-      {
-        id: 'warmup_300_free',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'freestyle',
-        description: '300m easy freestyle, build last 50m',
-        effort: 'easy'
-      },
-      {
-        id: 'technique_4x50_choice',
-        type: 'technique',
-        distance_m: 200,
-        stroke: 'mixed',
-        description: '4 x 50m choice drill/swim, 15s rest',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week3_mon_30min_3x10",
+    label: "30 min free, 3x10 min",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description:
+      "30 min freestyle easy effort: 3 x 10 min swim with 2–3 min easy recovery between blocks.",
   },
-  intermediate_20_medium: {
-    baseSegments: [
-      {
-        id: 'warmup_200_free_100_kick',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'mixed',
-        description: '200m easy free + 100m flutter kick',
-        effort: 'easy'
-      },
-      {
-        id: 'endurance_6x50_thresh',
-        type: 'endurance',
-        distance_m: 300,
-        stroke: 'freestyle',
-        description: '6 x 50m at threshold pace, 20s rest',
-        effort: 'medium'
-      }
-    ]
+  {
+    id: "week3_tue_5x100_plus_fast",
+    label: "5x100m + 100m fast",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 600,
+    description:
+      "5 x 100m with 30 sec recovery, then 90 sec easy recovery and finish with 100m fast recording time.",
   },
-  intermediate_20_hard: {
-    baseSegments: [
-      {
-        id: 'warmup_300_mix',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'mixed',
-        description: '300m mix of free/back, last 50 strong',
-        effort: 'easy'
-      },
-      {
-        id: 'speed_8x25_sprint',
-        type: 'speed',
-        distance_m: 200,
-        stroke: 'freestyle',
-        description: '8 x 25m sprint from push, 30s rest',
-        effort: 'hard'
-      }
-    ]
+  {
+    id: "week3_sat_800",
+    label: "800m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 800,
+    description: "800m easy continuous freestyle.",
   },
-  intermediate_30_easy: {
-    baseSegments: [
-      {
-        id: 'warmup_400_free',
-        type: 'warmup',
-        distance_m: 400,
-        stroke: 'freestyle',
-        description: '400m easy freestyle, focus on technique',
-        effort: 'easy'
-      },
-      {
-        id: 'technique_4x50_drill_swim',
-        type: 'technique',
-        distance_m: 200,
-        stroke: 'mixed',
-        description: '4 x 50m (25 drill / 25 swim), 20s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m easy choice stroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week4_mon_30min_3x10",
+    label: "30 min free, 3x10 min (repeat)",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description:
+      "30 min freestyle easy effort: 3 x 10 min swim with 2–3 min easy recovery between blocks.",
   },
-  intermediate_30_medium: {
-    baseSegments: [
-      {
-        id: 'warmup_300_free',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'freestyle',
-        description: '300m easy freestyle',
-        effort: 'easy'
-      },
-      {
-        id: 'endurance_8x50_steady',
-        type: 'endurance',
-        distance_m: 400,
-        stroke: 'freestyle',
-        description: '8 x 50m steady, 20s rest',
-        effort: 'medium'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m easy choice stroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week4_tue_6x100_plus_fast",
+    label: "6x100m steady + 100m fast",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 700,
+    description:
+      "6 x 100m steady effort with 30 sec recovery, then 90 sec easy recovery and 100m fast recording time.",
   },
-  intermediate_30_hard: {
-    baseSegments: [
-      {
-        id: 'warmup_300_mix',
-        type: 'warmup',
-        distance_m: 300,
-        stroke: 'mixed',
-        description: '300m mix free/back, last 50 build',
-        effort: 'easy'
-      },
-      {
-        id: 'speed_12x25_fast',
-        type: 'speed',
-        distance_m: 300,
-        stroke: 'freestyle',
-        description: '12 x 25m fast, 25s rest',
-        effort: 'hard'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m easy choice stroke',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week4_sat_900",
+    label: "900m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 900,
+    description: "900m easy continuous freestyle.",
   },
-  advanced_20_easy: {
-    baseSegments: [
-      {
-        id: 'warmup_400_free',
-        type: 'warmup',
-        distance_m: 400,
-        stroke: 'freestyle',
-        description: '400m easy freestyle with breathing focus',
-        effort: 'easy'
-      },
-      {
-        id: 'technique_4x50_drill',
-        type: 'technique',
-        distance_m: 200,
-        stroke: 'mixed',
-        description: '4 x 50m choice drill, 15s rest',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week5_mon_30min_3x10",
+    label: "30 min free, 3x10 min, shorter rest",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description:
+      "30 min freestyle easy effort: 3 x 10 min swim with 90 sec easy recovery between blocks.",
   },
-  advanced_20_medium: {
-    baseSegments: [
-      {
-        id: 'warmup_300_free_100_kick',
-        type: 'warmup',
-        distance_m: 400,
-        stroke: 'mixed',
-        description: '300m free + 100m kick',
-        effort: 'easy'
-      },
-      {
-        id: 'endurance_6x75_threshold',
-        type: 'endurance',
-        distance_m: 450,
-        stroke: 'freestyle',
-        description: '6 x 75m at threshold pace, 20s rest',
-        effort: 'medium'
-      }
-    ]
+  {
+    id: "week5_tue_30min_far_as_can",
+    label: "30 min, go as far as you can",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 1400,
+    description:
+      "30 min continuous swim, go as far as you can whilst maintaining control and good form.",
   },
-  advanced_20_hard: {
-    baseSegments: [
-      {
-        id: 'warmup_400_mix',
-        type: 'warmup',
-        distance_m: 400,
-        stroke: 'mixed',
-        description: '400m mix free/IM, last 50 strong',
-        effort: 'easy'
-      },
-      {
-        id: 'speed_8x50_sprint',
-        type: 'speed',
-        distance_m: 400,
-        stroke: 'freestyle',
-        description: '8 x 50m sprint, 30s rest',
-        effort: 'hard'
-      }
-    ]
+  {
+    id: "week5_sat_700",
+    label: "700m easy continuous",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 700,
+    description: "700m easy continuous freestyle.",
   },
-  advanced_30_easy: {
-    baseSegments: [
-      {
-        id: 'warmup_600_free',
-        type: 'warmup',
-        distance_m: 600,
-        stroke: 'freestyle',
-        description: '600m easy freestyle, descend each 200m',
-        effort: 'easy'
-      },
-      {
-        id: 'technique_4x50_drill_swim',
-        type: 'technique',
-        distance_m: 200,
-        stroke: 'mixed',
-        description: '4 x 50m (25 drill / 25 swim), 15s rest',
-        effort: 'easy'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m very easy choice',
-        effort: 'easy'
-      }
-    ]
+  {
+    id: "week6_mon_30min_easy",
+    label: "30 min easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "30 min continuous easy-effort swim.",
   },
-  advanced_30_medium: {
-    baseSegments: [
-      {
-        id: 'warmup_400_free_200_kick',
-        type: 'warmup',
-        distance_m: 600,
-        stroke: 'mixed',
-        description: '400m free + 200m kick',
-        effort: 'easy'
-      },
-      {
-        id: 'endurance_8x75_thresh',
-        type: 'endurance',
-        distance_m: 600,
-        stroke: 'freestyle',
-        description: '8 x 75m at threshold pace, 20s rest',
-        effort: 'medium'
-      }
-    ]
+  {
+    id: "week6_tue_6x150_plus_fast",
+    label: "6x150m steady + 100m fast",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 1000,
+    description:
+      "6 x 150m steady effort with 20 sec recovery, then 90 sec easy recovery and 100m fast recording time.",
   },
-  advanced_30_hard: {
-    baseSegments: [
-      {
-        id: 'warmup_400_mix',
-        type: 'warmup',
-        distance_m: 400,
-        stroke: 'mixed',
-        description: '400m mix free/IM, last 50 strong',
-        effort: 'easy'
-      },
-      {
-        id: 'speed_12x50_fast',
-        type: 'speed',
-        distance_m: 600,
-        stroke: 'freestyle',
-        description: '12 x 50m fast, 25s rest',
-        effort: 'hard'
-      },
-      {
-        id: 'cooldown_100_choice',
-        type: 'cooldown',
-        distance_m: 100,
-        stroke: 'mixed',
-        description: '100m easy choice',
-        effort: 'easy'
-      }
-    ]
-  }
-};
+  {
+    id: "week6_sat_800",
+    label: "800m easy continuous (repeat)",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 800,
+    description: "800m easy continuous freestyle.",
+  },
+  {
+    id: "week7_mon_30min_easy",
+    label: "30 min easy continuous (repeat)",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "30 min continuous easy-effort swim.",
+  },
+  {
+    id: "week7_tue_5x200",
+    label: "5x200m steady",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1000,
+    description: "5 x 200m steady effort with 30 sec recovery.",
+  },
+  {
+    id: "week7_sat_1000",
+    label: "1000m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1000,
+    description: "1000m easy continuous freestyle.",
+  },
+  {
+    id: "week8_mon_35min_easy",
+    label: "35 min easy continuous",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1400,
+    description: "35 min continuous easy-effort swim.",
+  },
+  {
+    id: "week8_tue_6x200",
+    label: "6x200m steady",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "6 x 200m steady effort with 30 sec recovery.",
+  },
+  {
+    id: "week8_sat_1200",
+    label: "1200m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "1200m easy continuous freestyle.",
+  },
+  {
+    id: "week9_mon_40min_2x20",
+    label: "40 min easy, 2x20 min",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1600,
+    description:
+      "40 min easy effort: 2 x 20 min swim with 5 min easy recovery between blocks.",
+  },
+  {
+    id: "week9_tue_30_40min_far_as_can",
+    label: "30–40 min, go as far as you can",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 1800,
+    description:
+      "30–40 min continuous swim, go as far as you can whilst maintaining control and good form.",
+  },
+  {
+    id: "week9_sat_1300",
+    label: "1300m easy continuous",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1300,
+    description: "1300m easy continuous freestyle.",
+  },
+  {
+    id: "week10_mon_40min_easy",
+    label: "40 min easy continuous",
+    durationBucket: 30,
+    effort: "medium",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1600,
+    description: "40 min continuous easy-effort swim.",
+  },
+  {
+    id: "week10_tue_8_10x100_race_pace",
+    label: "8–10x100m race pace",
+    durationBucket: 30,
+    effort: "hard",
+    fun_mode: "fun",
+    estimatedDistanceM: 1000,
+    description:
+      "8–10 x 100m at race pace with 15–20 sec recovery between each 100m.",
+  },
+  {
+    id: "week10_sat_1200",
+    label: "1200m easy continuous (repeat)",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "1200m easy continuous freestyle.",
+  },
+  {
+    id: "week11_mon_30min_easy",
+    label: "30 min easy continuous (taper)",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "30 min continuous easy-effort swim.",
+  },
+  {
+    id: "week11_tue_30min_continuous",
+    label: "30 min continuous easy freestyle",
+    durationBucket: 30,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 1200,
+    description: "30 min continuous easy freestyle.",
+  },
+  {
+    id: "week11_sat_700",
+    label: "700m easy continuous (taper)",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 700,
+    description: "700m easy continuous freestyle.",
+  },
+  {
+    id: "week12_thu_20min_continuous",
+    label: "20 min continuous easy freestyle",
+    durationBucket: 20,
+    effort: "easy",
+    fun_mode: "straightforward",
+    estimatedDistanceM: 800,
+    description: "20 min continuous easy-effort freestyle.",
+  },
+];
 
-function getTemplateKey(profile: Profile, request: PlanRequest): TemplateKey {
-  return `${profile.swim_level}_${request.duration_minutes}_${request.effort}` as TemplateKey;
-}
-
-function getRecentSegmentIds(history: GeneratorHistory, lookbackPlans = 5): Set<string> {
+function getRecentSessionIds(
+  history: GeneratorHistory,
+  lookbackPlans = 5,
+): Set<string> {
   const recent = history.acceptedPlans
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     .slice(0, lookbackPlans);
@@ -538,57 +439,67 @@ function getRecentSegmentIds(history: GeneratorHistory, lookbackPlans = 5): Set<
   return ids;
 }
 
-function filterSegmentsForFunMode(
-  segments: PlanSegment[],
-  funMode: FunMode
-): PlanSegment[] {
-  if (funMode === 'straightforward') {
-    return segments.filter(
-      (s) => s.type === 'warmup' || s.type === 'endurance' || s.type === 'cooldown'
-    );
-  }
+function pickSessionForRequest(
+  request: PlanRequest,
+  history: GeneratorHistory,
+): SwimSessionDefinition {
+  const recentIds = getRecentSessionIds(history);
 
-  return segments;
+  const byDuration = SESSION_LIBRARY.filter(
+    (s) => s.durationBucket === request.duration_minutes,
+  );
+
+  const byEffort = byDuration.filter(
+    (s) => s.effort === request.effort || request.effort === "medium",
+  );
+
+  const byFunMode = byEffort.filter(
+    (s) => s.fun_mode === request.fun_mode || s.fun_mode === "either",
+  );
+
+  const basePool =
+    byFunMode.length > 0
+      ? byFunMode
+      : byEffort.length > 0
+        ? byEffort
+        : byDuration.length > 0
+          ? byDuration
+          : SESSION_LIBRARY;
+
+  const notRecentlyUsed = basePool.filter((s) => !recentIds.has(s.id));
+  const pool = notRecentlyUsed.length > 0 ? notRecentlyUsed : basePool;
+
+  const index = Math.floor(Math.random() * pool.length);
+  return pool[index];
 }
 
 export function generatePlan(
   profile: Profile,
   request: PlanRequest,
-  history: GeneratorHistory
+  history: GeneratorHistory,
 ): GeneratedPlan {
-  const key = getTemplateKey(profile, request);
-  const template = BASE_TEMPLATES[key];
+  const session = pickSessionForRequest(request, history);
 
-  const baseSegments = template ? template.baseSegments : BASE_TEMPLATES['beginner_20_easy'].baseSegments;
-
-  const recentSegmentIds = getRecentSegmentIds(history);
-  const funFiltered = filterSegmentsForFunMode(baseSegments, request.fun_mode);
-
-  const segments: PlanSegment[] = funFiltered.map((segment) => {
-    if (recentSegmentIds.has(segment.id)) {
-      return {
-        ...segment,
-        description: `${segment.description} (focus on a slightly different detail today)`
-      };
-    }
-    return segment;
-  });
-
-  const estimated_distance_m = segments.reduce(
-    (total, seg) => total + seg.distance_m,
-    0
-  );
+  const segment: PlanSegment = {
+    id: session.id,
+    type: "session",
+    distance_m: session.estimatedDistanceM,
+    stroke: "mixed",
+    description: session.description,
+    effort: session.effort,
+  };
 
   return {
     duration_minutes: request.duration_minutes,
-    estimated_distance_m,
-    segments,
+    estimated_distance_m: session.estimatedDistanceM,
+    segments: [segment],
+    notes: session.label,
     metadata: {
-      version: 'v1',
+      version: "v1",
       swim_level: profile.swim_level,
       input_effort: request.effort,
-      input_fun_mode: request.fun_mode
-    }
+      input_fun_mode: request.fun_mode,
+    },
   };
 }
 
