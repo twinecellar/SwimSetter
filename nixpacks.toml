@@ -4,16 +4,18 @@
 nixPkgs = [
   "nodejs_20",
   "python311",
-  "python311Packages.pip",
 ]
 
 [phases.install]
-# Nix may provide `pip` as a standalone executable (without `python -m pip` being
-# available for the base interpreter). Use the `pip` CLI directly.
-cmds = ["npm ci", "pip install --user -r requirements.txt"]
+# Use a virtualenv so `pip install` writes into a writable prefix (not `/nix/store`).
+cmds = [
+  "npm ci",
+  "python -m venv /opt/venv",
+  "/opt/venv/bin/python -m pip install -r requirements.txt",
+]
 
 [phases.build]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npm run start"
+cmd = "bash -lc 'export PATH=/opt/venv/bin:$PATH; npm run start'"
