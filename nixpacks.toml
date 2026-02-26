@@ -8,7 +8,9 @@ nixPkgs = [
 ]
 
 [phases.install]
-cmds = ["npm ci", "python -m pip install --user -r requirements.txt"]
+# Nix may provide `pip` as a standalone executable (without `python -m pip` being
+# available for the base interpreter). Use the `pip` CLI directly.
+cmds = ["npm ci", "pip install --user -r requirements.txt"]
 
 [phases.build]
 cmds = ["npm run build"]
