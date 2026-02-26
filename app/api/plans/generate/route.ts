@@ -66,9 +66,19 @@ export async function POST(request: Request) {
       })) ?? [],
     feedbackByPlanId: (completions ?? []).reduce(
       (acc, c) => {
+        const rawRating = c.rating as number | null;
+        const rating =
+          rawRating === 0
+            ? 0
+            : rawRating === 1
+              ? 1
+              : rawRating && rawRating > 0
+                ? 1
+                : null;
+
         acc[c.plan_id as string] = {
           plan_id: c.plan_id as string,
-          rating: c.rating as number | null,
+          rating,
           tags: (c.tags as string[]) ?? []
         };
         return acc;

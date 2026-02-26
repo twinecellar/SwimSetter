@@ -158,8 +158,8 @@ export default function GeneratePlanPage() {
             disabled={generating || accepting}
             className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"
             style={{
-              backgroundColor: "#10b981",
-              borderColor: "#10b981",
+              backgroundColor: plan ? "#f59e0b" : "#0ea5e9",
+              borderColor: plan ? "#f59e0b" : "#0ea5e9",
               color: "#111827",
             }}
           >
@@ -171,7 +171,12 @@ export default function GeneratePlanPage() {
               type="button"
               onClick={handleAccept}
               disabled={accepting || generating}
-              className="inline-flex items-center rounded-md border border-sky-500 px-4 py-2 text-sm font-medium text-sky-300 hover:bg-sky-500/10 disabled:opacity-60"
+              className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"
+              style={{
+                backgroundColor: "#10b981",
+                borderColor: "#10b981",
+                color: "#111827",
+              }}
             >
               {accepting ? "Saving..." : "Accept session"}
             </button>

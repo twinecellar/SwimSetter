@@ -16,7 +16,7 @@ export default async function CompletePlanPage({
   if (rateLimited) {
     return (
       <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
-        <h2 className="text-xl font-semibold tracking-tight">Rate Session</h2>
+        <h2 className="text-xl font-semibold tracking-tight">Session Feedback</h2>
         <p className="text-sm text-slate-300">
           Too many auth requests right now. Wait about a minute, then refresh.
         </p>
@@ -44,9 +44,9 @@ export default async function CompletePlanPage({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Rate Session</h2>
+        <h2 className="text-xl font-semibold tracking-tight">Session Feedback</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Rate this session quickly, add tags, and include notes only if useful.
+          Give a quick thumbs up or down, add tags, and include notes only if useful.
         </p>
       </div>
 
@@ -54,7 +54,6 @@ export default async function CompletePlanPage({
         title="Session recap"
         request={typedPlan.request}
         plan={typedPlan.plan}
-        createdAt={typedPlan.created_at}
         status={typedPlan.status === "completed" ? "completed" : "in_progress"}
       />
 

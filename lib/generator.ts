@@ -46,7 +46,7 @@ export interface PastPlan {
 
 export interface PlanFeedback {
   plan_id: string;
-  rating: number | null;
+  rating: 0 | 1 | null;
   tags: string[];
 }
 

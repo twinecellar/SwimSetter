@@ -48,7 +48,7 @@ create table if not exists public.plans (
   generator_version text not null default 'v1'
 );
 
--- Plan completions (completion + tags/ratings)
+-- Plan completions (completion + tags/feedback)
 create table if not exists public.plan_completions (
   id uuid primary key default gen_random_uuid(),
   plan_id uuid not null references public.plans(id) on delete cascade,
@@ -56,8 +56,8 @@ create table if not exists public.plan_completions (
 
   completed_at timestamptz not null default now(),
 
-  -- simple 1-5 rating
-  rating int check (rating between 1 and 5),
+  -- simple thumbs feedback: 1 = up, 0 = down
+  rating int check (rating between 0 and 1),
 
   -- free-form tags like ['fun', 'tiring', 'kick','speed']
   tags text[] not null default array[]::text[],
@@ -132,4 +132,3 @@ create index if not exists idx_plan_completions_user_completed_at
 
 create index if not exists idx_plan_completions_tags_gin
   on public.plan_completions using gin (tags);
-

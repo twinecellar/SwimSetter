@@ -3,7 +3,7 @@ import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 interface CompleteBody {
-  rating?: number | null;
+  rating?: 0 | 1 | null;
   tags?: string[];
   notes?: string | null;
 }
@@ -28,6 +28,14 @@ export async function POST(
 
   const planId = context.params.id;
   const body = (await request.json()) as CompleteBody;
+  const rating = body.rating ?? null;
+
+  if (rating !== null && rating !== 0 && rating !== 1) {
+    return NextResponse.json(
+      { error: "Rating must be 0 (thumbs down) or 1 (thumbs up)." },
+      { status: 400 },
+    );
+  }
 
   const { data: existingPlan, error: planError } = await supabase
     .from("plans")
@@ -47,7 +55,7 @@ export async function POST(
     .insert({
       plan_id: planId,
       user_id: user.id,
-      rating: body.rating ?? null,
+      rating,
       tags: body.tags ?? [],
       notes: body.notes ?? null,
     })

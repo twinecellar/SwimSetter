@@ -1,12 +1,10 @@
 import type { CompletionRow, GeneratedPlan, PlanRequest } from "@/lib/plan-types";
-import { formatSessionDate } from "@/lib/plan-utils";
 import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
 
 interface PlanCardProps {
   title: string;
   request?: PlanRequest;
   plan: Pick<GeneratedPlan, "duration_minutes" | "estimated_distance_m" | "segments">;
-  createdAt?: string;
   status?: "planned" | "in_progress" | "completed";
   completion?: CompletionRow;
   actions?: React.ReactNode;
@@ -16,17 +14,13 @@ export function PlanCard({
   title,
   request,
   plan,
-  createdAt,
   status,
   completion,
   actions,
 }: PlanCardProps) {
   const firstSegment = plan.segments[0];
-  const ratingValue = completion?.rating ?? null;
-  const ratingStars =
-    ratingValue && ratingValue > 0
-      ? `${"★".repeat(ratingValue)}${"☆".repeat(5 - ratingValue)}`
-      : null;
+  const feedbackSymbol =
+    completion?.rating === 0 ? "👎" : completion?.rating === 1 ? "👍" : "No feedback";
 
   const requestTokenStyle = {
     backgroundColor: "#0b1736",
@@ -46,16 +40,12 @@ export function PlanCard({
         <div>
           <p className="text-sm font-medium text-slate-100">{title}</p>
           <p className="mt-1 text-xs text-slate-400">~{plan.estimated_distance_m}m planned</p>
-          {createdAt && (
-            <p className="mt-1 text-xs text-slate-500">{formatSessionDate(createdAt)}</p>
-          )}
         </div>
         {status && <SessionStatusBadge status={status} />}
       </div>
 
       {request && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">INPUTS</p>
           <div className="flex flex-wrap gap-2">
             <span
               className="rounded-full border px-3 py-1 text-xs font-medium"
@@ -83,15 +73,12 @@ export function PlanCard({
 
       {completion && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">RATING</p>
           <div className="flex flex-wrap gap-2">
             <span
               className="rounded-full border px-3 py-1 text-xs font-medium"
               style={feedbackTokenStyle}
             >
-              {ratingStars
-                ? `${ratingStars} (${completion.rating}/5)`
-                : "Not rated"}
+              {feedbackSymbol}
             </span>
             {completion.tags.slice(0, 5).map((tag) => (
               <span

@@ -19,26 +19,21 @@ export function HistoryList({
     <div className="space-y-3">
       {rows.map((plan) => {
         const completion = completionsByPlanId[plan.id];
+        const title =
+          plan.status === "completed"
+            ? new Date(plan.created_at).toLocaleDateString()
+            : "Planned session";
 
         return (
           <PlanCard
             key={plan.id}
-            title={`${plan.status === "accepted" ? "Planned" : "Completed"} session`}
+            title={title}
             request={plan.request}
             plan={plan.plan}
-            createdAt={plan.created_at}
             status={plan.status === "completed" ? "completed" : "planned"}
             completion={completion}
             actions={
-              plan.status === "completed" ? (
-                <Link
-                  href={`/plans/${plan.id}/complete`}
-                  prefetch={false}
-                  className="inline-flex items-center rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-sky-500 hover:text-sky-300"
-                >
-                  Rate session
-                </Link>
-              ) : (
+              plan.status !== "completed" ? (
                 <Link
                   href={`/plans/${plan.id}/complete`}
                   prefetch={false}
@@ -51,7 +46,7 @@ export function HistoryList({
                 >
                   Finish
                 </Link>
-              )
+              ) : undefined
             }
           />
         );

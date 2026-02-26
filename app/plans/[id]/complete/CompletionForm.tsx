@@ -18,7 +18,7 @@ const SUGGESTED_TAGS = [
 
 export function CompletionForm({ planId }: CompletionFormProps) {
   const router = useRouter();
-  const [rating, setRating] = useState<number | null>(4);
+  const [rating, setRating] = useState<0 | 1>(1);
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   const [notes, setNotes] = useState("");
@@ -103,24 +103,27 @@ export function CompletionForm({ planId }: CompletionFormProps) {
     >
       <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/30 p-4">
         <div className="flex items-center justify-between gap-2">
-          <label className="block text-sm font-medium text-slate-200">Rating</label>
-          <p className="text-sm font-medium text-slate-300">{rating ?? 0}/5</p>
+          <label className="block text-sm font-medium text-slate-200">Feedback</label>
+          <p className="text-sm font-medium text-slate-300">{rating === 1 ? "👍" : "👎"}</p>
         </div>
         <div className="flex gap-1.5">
-          {[1, 2, 3, 4, 5].map((value) => (
+          {([
+            { value: 1 as const, label: "Thumbs up", symbol: "👍" },
+            { value: 0 as const, label: "Thumbs down", symbol: "👎" },
+          ]).map((option) => (
             <button
-              key={value}
+              key={option.value}
               type="button"
-              onClick={() => setRating(value)}
-              aria-label={`Rate ${value} out of 5`}
-              className="flex h-11 w-11 items-center justify-center rounded-md border text-2xl leading-none transition-colors"
+              onClick={() => setRating(option.value)}
+              aria-label={option.label}
+              className="flex h-11 w-20 items-center justify-center rounded-md border text-2xl leading-none transition-colors"
               style={{
                 backgroundColor: "#0b1736",
                 borderColor: "#334155",
-                color: rating && value <= rating ? "#fbbf24" : "#64748b",
+                color: rating === option.value ? "#f8fafc" : "#64748b",
               }}
             >
-              ★
+              {option.symbol}
             </button>
           ))}
         </div>

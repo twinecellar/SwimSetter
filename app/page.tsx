@@ -60,6 +60,7 @@ export default async function HomePage({
   const typedPlans = (plans ?? []) as unknown as PlanRow[];
   const typedCompletions = (completions ?? []) as unknown as CompletionRow[];
   const completionsMap = completionByPlanId(typedCompletions);
+  const completedPlans = typedPlans.filter((plan) => plan.status === "completed");
 
   const currentPlan = typedPlans.find((plan) => plan.status === "accepted") ?? null;
   const latestCompletedPlan = typedPlans.find((plan) => plan.status === "completed") ?? null;
@@ -110,7 +111,6 @@ export default async function HomePage({
           title="Current Session"
           request={currentPlan.request}
           plan={currentPlan.plan}
-          createdAt={currentPlan.created_at}
           status={returnedFromCompletion ? "in_progress" : "planned"}
           actions={
             <Link
@@ -125,35 +125,6 @@ export default async function HomePage({
             >
               {returnedFromCompletion ? "Continue completion" : "Finish"}
             </Link>
-          }
-        />
-      )}
-
-      {!currentPlan && latestCompletedPlan && (
-        <PlanCard
-          title="Latest Session"
-          request={latestCompletedPlan.request}
-          plan={latestCompletedPlan.plan}
-          createdAt={latestCompletedPlan.created_at}
-          status="completed"
-          completion={completionsMap[latestCompletedPlan.id]}
-          actions={
-            <>
-              <Link
-                href="/plans/generate?from=home"
-                prefetch={false}
-                className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"
-              >
-                Generate next session
-              </Link>
-              <Link
-                href="/plans"
-                prefetch={false}
-                className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500"
-              >
-                View history
-              </Link>
-            </>
           }
         />
       )}
@@ -174,7 +145,7 @@ export default async function HomePage({
         </section>
       )}
 
-      {typedPlans.length > 0 && (
+      {completedPlans.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold tracking-tight text-slate-100">Recent sessions</h3>
@@ -186,7 +157,7 @@ export default async function HomePage({
               View all
             </Link>
           </div>
-          <HistoryList plans={typedPlans} completionsByPlanId={completionsMap} limit={5} />
+          <HistoryList plans={completedPlans} completionsByPlanId={completionsMap} limit={5} />
         </section>
       )}
     </div>

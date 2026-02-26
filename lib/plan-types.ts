@@ -39,7 +39,7 @@ export interface PlanRow {
 
 export interface CompletionRow {
   plan_id: string;
-  rating: number | null;
+  rating: 0 | 1 | null;
   tags: string[];
   notes: string | null;
   completed_at: string;

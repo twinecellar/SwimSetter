@@ -100,7 +100,6 @@ export default async function PlansPage() {
             title="Current Session"
             request={currentPlan.request}
             plan={currentPlan.plan}
-            createdAt={currentPlan.created_at}
             status="planned"
             actions={
               <Link
