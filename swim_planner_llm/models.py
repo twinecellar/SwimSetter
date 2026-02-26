@@ -7,7 +7,6 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 Effort = Literal["easy", "medium", "hard"]
-FunMode = Literal["straightforward", "varied"]
 Stroke = Literal["freestyle", "backstroke", "breaststroke", "butterfly", "mixed", "choice"]
 StepKind = Literal["continuous", "intervals"]
 
@@ -17,7 +16,6 @@ class SessionRequested(BaseModel):
 
     duration_minutes: int = Field(gt=0)
     effort: Effort
-    fun_mode: FunMode
     requested_tags: list[str] = Field(default_factory=list)
 
 

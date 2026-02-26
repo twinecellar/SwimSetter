@@ -1,11 +1,11 @@
 export type Effort = "easy" | "medium" | "hard";
-export type FunMode = "straightforward" | "fun";
 export type PlanStatus = "generated" | "accepted" | "completed";
+export type DurationMinutes = 15 | 20 | 25 | 30 | 35 | 40 | 45 | 50 | 55 | 60;
 
 export interface PlanRequest {
-  duration_minutes: 20 | 30;
+  duration_minutes: DurationMinutes;
   effort: Effort;
-  fun_mode: FunMode;
+  requested_tags?: string[];
 }
 
 export interface PlanSegment {
@@ -25,7 +25,6 @@ export interface GeneratedPlan {
     version: string;
     swim_level: string;
     input_effort: Effort;
-    input_fun_mode: FunMode;
   };
 }
 

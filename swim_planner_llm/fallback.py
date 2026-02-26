@@ -16,6 +16,7 @@ from .models import (
     SwimPlanInput,
     SwimPlanResponse,
 )
+from .style_inference import infer_prefer_varied_from_payload
 
 NAMESPACE_DNS = UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 RISK_TAGS = {"pace-too-fast", "long", "tiring"}
@@ -120,8 +121,9 @@ def _main_steps(
     main_dist: int,
     rng: random.Random,
     risk_down: bool,
+    prefer_varied: bool,
 ) -> list[Step]:
-    if req.effort == "hard" and req.fun_mode == "straightforward":
+    if req.effort == "hard" and not prefer_varied:
         rep_dist = 50 if main_dist % 50 == 0 else 25
         reps = max(1, main_dist // rep_dist)
         rest = 15 if not risk_down else 20
@@ -138,7 +140,7 @@ def _main_steps(
             )
         ]
 
-    if req.effort == "hard" and req.fun_mode == "varied":
+    if req.effort == "hard" and prefer_varied:
         if main_dist >= 200:
             first = _round_to_multiple(int(main_dist * 0.55), 25)
             second = main_dist - first
@@ -180,7 +182,7 @@ def _main_steps(
             )
         ]
 
-    if req.fun_mode == "straightforward":
+    if not prefer_varied:
         if req.effort == "medium":
             rep_dist = 50 if main_dist % 50 == 0 else 25
             reps = max(1, main_dist // rep_dist)
@@ -236,6 +238,34 @@ def _main_steps(
             ),
         ]
 
+    if main_dist >= 100:
+        first = _round_to_multiple(int(main_dist * 0.5), 25)
+        first = max(25, first)
+        second = max(25, main_dist - first)
+        first = main_dist - second
+        return [
+            _step(
+                "main-1",
+                "intervals",
+                max(1, first // 25),
+                25,
+                "mixed",
+                20,
+                req.effort,
+                "Varied interval set (mixed emphasis)",
+            ),
+            _step(
+                "main-2",
+                "intervals",
+                max(1, second // 25),
+                25,
+                rng.choice(["choice", "backstroke", "breaststroke"]),
+                20,
+                req.effort,
+                "Varied interval set (stroke change)",
+            ),
+        ]
+
     return [
         _step(
             "main-1",
@@ -245,7 +275,7 @@ def _main_steps(
             "choice",
             25,
             req.effort,
-            "Varied interval set",
+            "Compact varied interval set",
         )
     ]
 
@@ -260,6 +290,7 @@ def build_deterministic_fallback(payload: SwimPlanInput, seed: Optional[int]) ->
     rng = random.Random(real_seed)
 
     req = payload.session_requested
+    prefer_varied = infer_prefer_varied_from_payload(payload)
     pool_length = 25
     target_distance = _compute_target_distance(payload)
     warm_dist, main_dist, cool_dist = _split_distance(target_distance, pool_length)
@@ -278,7 +309,7 @@ def build_deterministic_fallback(payload: SwimPlanInput, seed: Optional[int]) ->
             "Easy warm-up",
         )
     ]
-    main_steps = _main_steps(req, main_dist, rng, risk_down)
+    main_steps = _main_steps(req, main_dist, rng, risk_down, prefer_varied)
     cool_steps = [
         _step(
             "cd-1",

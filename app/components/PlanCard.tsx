@@ -59,12 +59,15 @@ export function PlanCard({
             >
               {request.effort}
             </span>
-            <span
-              className="rounded-full border px-3 py-1 text-xs font-medium"
-              style={requestTokenStyle}
-            >
-              {request.fun_mode}
-            </span>
+            {(request.requested_tags ?? []).slice(0, 5).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border px-3 py-1 text-xs font-medium"
+                style={requestTokenStyle}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       )}

@@ -6,16 +6,18 @@ import { GenerateControls } from "@/app/components/GenerateControls";
 import { PlanCard } from "@/app/components/PlanCard";
 import { SegmentList } from "@/app/components/SegmentList";
 import type { GeneratedPlan, PlanRequest, PlanRow } from "@/lib/plan-types";
+import { isDurationMinutes, normalizeRequestedTags } from "@/lib/request-options";
 
 export default function GeneratePlanPage() {
   const router = useRouter();
   const [request, setRequest] = useState<PlanRequest>({
-    duration_minutes: 20,
-    effort: "easy",
-    fun_mode: "straightforward",
+    duration_minutes: 30,
+    effort: "medium",
+    requested_tags: [],
   });
   const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null);
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
+  const [generatedRequest, setGeneratedRequest] = useState<PlanRequest | null>(null);
   const [generating, setGenerating] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +52,14 @@ export default function GeneratePlanPage() {
 
       const mostRecentRequest = json.plans?.[0]?.request;
       if (mostRecentRequest) {
-        setRequest(mostRecentRequest);
-        setLastRequest(mostRecentRequest);
+        const normalizedRequest: PlanRequest = {
+          duration_minutes: isDurationMinutes(mostRecentRequest.duration_minutes)
+            ? mostRecentRequest.duration_minutes
+            : 30,
+          effort: mostRecentRequest.effort,
+          requested_tags: normalizeRequestedTags(mostRecentRequest.requested_tags),
+        };
+        setLastRequest(normalizedRequest);
       }
     }
 
@@ -59,7 +67,12 @@ export default function GeneratePlanPage() {
   }, [router]);
 
   const controlsSummary = useMemo(
-    () => `${request.duration_minutes}m · ${request.effort} · ${request.fun_mode}`,
+    () =>
+      `${request.duration_minutes}m · ${request.effort}${
+        (request.requested_tags ?? []).length > 0
+          ? ` · tags: ${(request.requested_tags ?? []).join(", ")}`
+          : ""
+      }`,
     [request],
   );
 
@@ -94,6 +107,7 @@ export default function GeneratePlanPage() {
         request: PlanRequest;
       };
       setPlan(json.plan);
+      setGeneratedRequest(json.request);
       setGeneratedAt(hadPlan ? "Regenerated just now." : "Generated just now.");
     } catch {
       setError("Something went wrong. Please try again.");
@@ -104,6 +118,7 @@ export default function GeneratePlanPage() {
 
   async function handleAccept() {
     if (!plan) return;
+    const requestToSave = generatedRequest ?? request;
     setAccepting(true);
     setError(null);
 
@@ -111,7 +126,7 @@ export default function GeneratePlanPage() {
       const response = await fetch("/api/plans/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request, plan }),
+        body: JSON.stringify({ request: requestToSave, plan }),
       });
 
       if (!response.ok) {
@@ -143,8 +158,10 @@ export default function GeneratePlanPage() {
 
       {lastRequest && (
         <p className="text-xs text-slate-400">
-          Based on last request: {lastRequest.duration_minutes}m, {lastRequest.effort},{" "}
-          {lastRequest.fun_mode}
+          Based on last request: {lastRequest.duration_minutes}m, {lastRequest.effort}
+          {(lastRequest.requested_tags ?? []).length > 0
+            ? `, tags: ${(lastRequest.requested_tags ?? []).join(", ")}`
+            : ""}
         </p>
       )}
 
@@ -192,7 +209,7 @@ export default function GeneratePlanPage() {
 
       {plan ? (
         <div className="space-y-4">
-          <PlanCard title="Generated plan" request={request} plan={plan} />
+          <PlanCard title="Generated plan" request={generatedRequest ?? request} plan={plan} />
           <SegmentList segments={plan.segments} />
         </div>
       ) : (

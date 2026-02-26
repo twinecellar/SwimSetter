@@ -15,6 +15,7 @@ from .models import (
     Step,
     SwimPlanResponse,
 )
+from .style_inference import infer_prefer_varied
 
 
 class ValidationIssue(ValueError):
@@ -155,6 +156,7 @@ def validate_invariants(
     plan: SwimPlanResponse,
     request: SessionRequested,
     historic_sessions: list[HistoricSession],
+    requested_tags: list[str],
 ) -> None:
     warm_sum = _validate_section(plan.sections.warm_up, "warm_up")
     main_sum = _validate_section(plan.sections.main_set, "main_set")
@@ -181,19 +183,22 @@ def validate_invariants(
             "duration_minutes must match requested duration_minutes"
         )
 
-    if request.fun_mode == "straightforward":
+    prefer_varied = infer_prefer_varied(
+        request.requested_tags + requested_tags,
+        historic_sessions,
+    )
+
+    if not prefer_varied:
         signatures = {_step_signature(step) for step in plan.sections.main_set.steps}
         if len(signatures) > 1:
             raise ValidationIssue(
-                "straightforward mode requires one main_set pattern signature"
+                "straightforward style requires one main_set pattern signature"
             )
 
-    if request.fun_mode == "varied":
-        # Soft-ish product rule turned into validation:
-        # if varied mode has only one main step, it is usually under-delivering.
+    if prefer_varied:
         if len(plan.sections.main_set.steps) < 2:
             raise ValidationIssue(
-                "varied mode should usually include at least 2 main_set steps"
+                "varied style should include at least 2 main_set steps"
             )
 
     if _has_sensitive_down_feedback(historic_sessions):

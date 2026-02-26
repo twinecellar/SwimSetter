@@ -35,7 +35,12 @@ def _build_valid_plan_from_llm(
 
     plan = enforce_and_normalize(draft, payload.session_requested, seed)
     validate_schema(plan)
-    validate_invariants(plan, payload.session_requested, payload.historic_sessions)
+    validate_invariants(
+        plan,
+        payload.session_requested,
+        payload.historic_sessions,
+        payload.requested_tags,
+    )
     return plan
 
 

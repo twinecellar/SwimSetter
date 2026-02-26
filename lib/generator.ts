@@ -1,6 +1,7 @@
+import type { DurationMinutes, Effort as EffortLevel } from "@/lib/plan-types";
+import { normalizeRequestedTags } from "@/lib/request-options";
+
 export type SwimLevel = "beginner" | "intermediate" | "advanced";
-export type EffortLevel = "easy" | "medium" | "hard";
-export type FunMode = "straightforward" | "fun";
 
 export interface Profile {
   id: string;
@@ -9,9 +10,9 @@ export interface Profile {
 }
 
 export interface PlanRequest {
-  duration_minutes: 20 | 30;
+  duration_minutes: DurationMinutes;
   effort: EffortLevel;
-  fun_mode: FunMode;
+  requested_tags?: string[];
 }
 
 export interface PlanSegment {
@@ -34,7 +35,6 @@ export interface GeneratedPlan {
     version: "v1";
     swim_level: SwimLevel;
     input_effort: EffortLevel;
-    input_fun_mode: FunMode;
   };
 }
 
@@ -60,9 +60,9 @@ type SessionId = string;
 interface SwimSessionDefinition {
   id: SessionId;
   label: string;
-  durationBucket: 20 | 30;
+  durationBucket: DurationMinutes;
   effort: EffortLevel;
-  fun_mode: FunMode | "either";
+  fun_mode: "straightforward" | "fun" | "either";
   estimatedDistanceM: number;
   description: string;
 }
@@ -617,6 +617,11 @@ const SESSION_LIBRARY: SwimSessionDefinition[] = [
   },
 ];
 
+const SESSION_LIBRARY_BY_ID = new Map(SESSION_LIBRARY.map((session) => [session.id, session]));
+const VARIED_REQUEST_TAGS = new Set(["fun", "mixed", "technique", "speed"]);
+const STRAIGHTFORWARD_REQUEST_TAGS = new Set(["recovery", "steady", "freestyle"]);
+const VARIED_HISTORY_TAGS = new Set(["fun", "mixed", "varied", "technique"]);
+
 function getRecentSessionIds(
   history: GeneratorHistory,
   lookbackPlans = 5,
@@ -634,38 +639,139 @@ function getRecentSessionIds(
   return ids;
 }
 
+function roundToNearest50(value: number): number {
+  return Math.max(300, Math.round(value / 50) * 50);
+}
+
+function targetDistanceRange(
+  duration: DurationMinutes,
+  effort: EffortLevel,
+): { min: number; max: number } {
+  const paceByEffort: Record<EffortLevel, [number, number]> = {
+    easy: [25, 35],
+    medium: [30, 40],
+    hard: [35, 45],
+  };
+  const [lowPerMinute, highPerMinute] = paceByEffort[effort];
+  return {
+    min: duration * lowPerMinute,
+    max: duration * highPerMinute,
+  };
+}
+
+function tagAffinityScore(session: SwimSessionDefinition, tags: string[]): number {
+  if (tags.length === 0) return 0;
+
+  const source = `${session.id} ${session.label} ${session.description}`.toLowerCase();
+  let score = 0;
+
+  for (const tag of tags) {
+    if (tag === "speed" && /(race pace|fast|interval|x)/.test(source)) score += 3;
+    if (tag === "endurance" && /(continuous|long|min|far)/.test(source)) score += 3;
+    if (tag === "recovery" && /(easy|recovery|relaxed)/.test(source)) score += 2;
+    if (tag === "technique" && /(technique|form|drill)/.test(source)) score += 3;
+    if (tag === "freestyle" && source.includes("freestyle")) score += 3;
+    if (tag === "mixed" && /(mixed|choice|varied)/.test(source)) score += 3;
+    if (tag === "steady" && source.includes("steady")) score += 2;
+    if (tag === "fun" && /(fast|varied|plus|finish)/.test(source)) score += 2;
+  }
+
+  return score;
+}
+
+function normalizeUniqueTags(rawTags: string[]): string[] {
+  const tags: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of rawTags) {
+    const cleaned = value.trim().toLowerCase();
+    if (!cleaned || seen.has(cleaned)) continue;
+    seen.add(cleaned);
+    tags.push(cleaned);
+  }
+
+  return tags;
+}
+
+function inferPreferVariedStyle(
+  requestedTags: string[],
+  history: GeneratorHistory,
+): boolean {
+  let score = 0;
+
+  for (const tag of requestedTags) {
+    if (VARIED_REQUEST_TAGS.has(tag)) score += 2;
+    if (STRAIGHTFORWARD_REQUEST_TAGS.has(tag)) score -= 1;
+  }
+
+  const acceptedById = new Map(history.acceptedPlans.map((plan) => [plan.id, plan]));
+
+  for (const feedback of Object.values(history.feedbackByPlanId)) {
+    if (feedback.rating !== 0 && feedback.rating !== 1) continue;
+
+    const acceptedPlan = acceptedById.get(feedback.plan_id);
+    if (!acceptedPlan) continue;
+
+    const variedBySession = acceptedPlan.plan.segments.some((segment) => {
+      return SESSION_LIBRARY_BY_ID.get(segment.id)?.fun_mode === "fun";
+    });
+    const variedByTags = normalizeUniqueTags(feedback.tags).some((tag) => VARIED_HISTORY_TAGS.has(tag));
+    if (!variedBySession && !variedByTags) continue;
+
+    score += feedback.rating === 1 ? 1 : -1;
+  }
+
+  return score > 0;
+}
+
+function rewriteDurationPrefix(description: string, durationMinutes: DurationMinutes): string {
+  return description.replace(
+    /^\d+\s*(?:-|–|to)?\s*\d*\s*(?:min|mins|minutes)\b/i,
+    `${durationMinutes} min`,
+  );
+}
+
 function pickSessionForRequest(
   request: PlanRequest,
   history: GeneratorHistory,
 ): SwimSessionDefinition {
   const recentIds = getRecentSessionIds(history);
+  const requestedTags = normalizeRequestedTags(request.requested_tags);
+  const preferVaried = inferPreferVariedStyle(requestedTags, history);
 
-  const byDuration = SESSION_LIBRARY.filter(
-    (s) => s.durationBucket === request.duration_minutes,
-  );
-
-  const byEffort = byDuration.filter(
+  const byEffort = SESSION_LIBRARY.filter(
     (s) => s.effort === request.effort || request.effort === "medium",
   );
-
-  const byFunMode = byEffort.filter(
-    (s) => s.fun_mode === request.fun_mode || s.fun_mode === "either",
-  );
-
-  const basePool =
-    byFunMode.length > 0
-      ? byFunMode
-      : byEffort.length > 0
-        ? byEffort
-        : byDuration.length > 0
-          ? byDuration
-          : SESSION_LIBRARY;
+  const basePool = byEffort.length > 0 ? byEffort : SESSION_LIBRARY;
 
   const notRecentlyUsed = basePool.filter((s) => !recentIds.has(s.id));
   const pool = notRecentlyUsed.length > 0 ? notRecentlyUsed : basePool;
 
-  const index = Math.floor(Math.random() * pool.length);
-  return pool[index];
+  const target = targetDistanceRange(request.duration_minutes, request.effort);
+  const targetMidpoint = (target.min + target.max) / 2;
+
+  const scored = pool
+    .map((session) => {
+      const durationScale = request.duration_minutes / session.durationBucket;
+      const scaledDistance = session.estimatedDistanceM * durationScale;
+      const distancePenalty = Math.abs(scaledDistance - targetMidpoint);
+      const affinity = tagAffinityScore(session, requestedTags);
+      const styleTieBreaker = preferVaried
+        ? session.fun_mode === "fun"
+          ? 1
+          : 0
+        : session.fun_mode === "straightforward"
+          ? 1
+          : 0;
+      return { session, affinity, distancePenalty, styleTieBreaker };
+    })
+    .sort((a, b) => {
+      if (a.affinity !== b.affinity) return b.affinity - a.affinity;
+      if (a.distancePenalty !== b.distancePenalty) return a.distancePenalty - b.distancePenalty;
+      return b.styleTieBreaker - a.styleTieBreaker;
+    });
+
+  return scored[0].session;
 }
 
 export function generatePlan(
@@ -674,26 +780,28 @@ export function generatePlan(
   history: GeneratorHistory,
 ): GeneratedPlan {
   const session = pickSessionForRequest(request, history);
+  const scale = request.duration_minutes / session.durationBucket;
+  const scaledDistance = roundToNearest50(session.estimatedDistanceM * scale);
+  const description = rewriteDurationPrefix(session.description, request.duration_minutes);
 
   const segment: PlanSegment = {
     id: session.id,
     type: "session",
-    distance_m: session.estimatedDistanceM,
+    distance_m: scaledDistance,
     stroke: "mixed",
-    description: session.description,
+    description,
     effort: session.effort,
   };
 
   return {
     duration_minutes: request.duration_minutes,
-    estimated_distance_m: session.estimatedDistanceM,
+    estimated_distance_m: scaledDistance,
     segments: [segment],
     notes: session.label,
     metadata: {
       version: "v1",
       swim_level: profile.swim_level,
       input_effort: request.effort,
-      input_fun_mode: request.fun_mode,
     },
   };
 }

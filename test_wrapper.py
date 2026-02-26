@@ -4,13 +4,15 @@ import json
 from pathlib import Path
 
 from swim_planner_llm import generate_swim_plan, plan_to_canonical_text
+from swim_planner_llm.models import SwimPlanInput
+from swim_planner_llm.style_inference import infer_prefer_varied_from_payload
 
 
 DEFAULT_SYNTHETIC_PAYLOAD = {
     "session_requested": {
         "duration_minutes": 25,
         "effort": "hard",
-        "fun_mode": "varied",
+        "requested_tags": ["speed", "technique", "endurance"],
     },
     "historic_sessions": [
         {
@@ -65,6 +67,8 @@ def _pattern_count_for_main_set(plan) -> int:
 def main() -> None:
     payload = _load_payload()
     plan = generate_swim_plan(payload, seed=42)
+    parsed_payload = SwimPlanInput.model_validate(payload)
+    prefer_varied = infer_prefer_varied_from_payload(parsed_payload)
 
     assert plan.sections.warm_up is not None
     assert plan.sections.main_set is not None
@@ -81,8 +85,10 @@ def main() -> None:
     )
     assert section_total == plan.estimated_distance_m
 
-    if payload["session_requested"]["fun_mode"] == "straightforward":
+    if not prefer_varied:
         assert _pattern_count_for_main_set(plan) <= 1
+    else:
+        assert len(plan.sections.main_set.steps) >= 2
 
     for section in [plan.sections.warm_up, plan.sections.main_set, plan.sections.cool_down]:
         for step in section.steps:

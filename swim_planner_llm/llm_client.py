@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from .models import HistoricSession, SwimPlanInput
+from .style_inference import infer_prefer_varied_from_payload
 
 SYSTEM_PROMPT = (
     "You are a swim session planner. You must return valid JSON matching the provided schema. "
@@ -200,7 +201,7 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
         "recovery": "Use easy pacing, generous rest, and simple structure.",
         "fun": (
             "Use engaging but still clear set descriptions; mild variation is acceptable "
-            "if compatible with fun_mode."
+            "if compatible with inferred style guidance."
         ),
         "steady": "Prefer repeatable, even-paced aerobic efforts over abrupt pace changes.",
         "short": "Keep the plan efficient and avoid unnecessary extra steps.",
@@ -236,15 +237,13 @@ def _effort_hint(effort: str) -> str:
     return hints_map.get(effort, "Use balanced effort progression across sections.")
 
 
-def _fun_mode_hint(fun_mode: str) -> str:
-    hints_map = {
-        "straightforward": "Keep the main set to one clear pattern with minimal variation.",
-        "varied": (
-            "Prefer a main set with 2-3 distinct steps (for example different rep "
-            "distances, strokes, or interval structures) while preserving consistent schema."
-        ),
-    }
-    return hints_map.get(fun_mode, "Use a practical mix of structure and variation.")
+def _style_hint(prefer_varied: bool) -> str:
+    if prefer_varied:
+        return (
+            "Inferred preferred style is varied. Build a main set with 2-3 distinct steps "
+            "while preserving schema consistency."
+        )
+    return "Inferred preferred style is straightforward. Keep the main set to one clear pattern."
 
 
 def build_user_prompt(
@@ -254,13 +253,14 @@ def build_user_prompt(
 ) -> str:
     requested_tags = _requested_tags(payload)
     effort = payload.session_requested.effort
-    fun_mode = payload.session_requested.fun_mode
     duration = payload.session_requested.duration_minutes
+    prefer_varied = infer_prefer_varied_from_payload(payload)
 
     effort_hint = _effort_hint(effort)
-    fun_mode_hint = _fun_mode_hint(fun_mode)
+    style_hint = _style_hint(prefer_varied)
     distance_guidance = _distance_guidance(duration, effort)
     tag_hints = _requested_tag_hints(requested_tags)
+    inferred_style = "varied" if prefer_varied else "straightforward"
 
     return (
         "Generate a personalised swim session plan.\n\n"
@@ -268,11 +268,13 @@ def build_user_prompt(
         "1. Return valid JSON matching the schema exactly.\n"
         "2. Match requested duration_minutes.\n"
         "3. Match requested effort.\n"
-        "4. Match requested fun_mode.\n"
+        "4. Match inferred session style from requested tags + history.\n"
         "5. Use history to prefer previously successful structure and volume.\n"
         "6. Apply requested tags where compatible.\n\n"
         "REQUEST:\n"
         f"{json.dumps(payload.session_requested.model_dump(), sort_keys=True)}\n\n"
+        "INFERRED STYLE:\n"
+        f"{inferred_style}\n\n"
         "REQUESTED TAGS:\n"
         f"{json.dumps(requested_tags)}\n"
         f"{tag_hints}\n\n"
@@ -280,8 +282,8 @@ def build_user_prompt(
         f"{history_summary}\n\n"
         "EFFORT GUIDANCE:\n"
         f"{effort_hint}\n\n"
-        "FUN MODE GUIDANCE:\n"
-        f"{fun_mode_hint}\n\n"
+        "STYLE GUIDANCE:\n"
+        f"{style_hint}\n\n"
         "DISTANCE GUIDANCE:\n"
         f"{distance_guidance}\n\n"
         "HARD CONSTRAINTS:\n"
@@ -303,8 +305,8 @@ def build_user_prompt(
         "- Allowed stroke values: freestyle, backstroke, breaststroke, mixed, choice.\n"
         "- Allowed effort values: easy, medium, hard.\n\n"
         "SESSION-SPECIFIC RULES:\n"
-        "- For straightforward mode: main_set must contain one clear pattern only.\n"
-        "- For varied mode: main_set should usually contain 2-3 distinct steps with clear variation.\n"
+        "- If inferred style is straightforward: main_set must contain one clear pattern only.\n"
+        "- If inferred style is varied: main_set should usually contain 2-3 distinct steps with clear variation.\n"
         "- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n"
         "- For hard effort, increase intensity using interval density or shorter rest, not excessive distance.\n"
         "- Prefer expressing requested tag intent in the main_set first.\n\n"
