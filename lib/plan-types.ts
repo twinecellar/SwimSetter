@@ -15,6 +15,8 @@ export interface PlanSegment {
   stroke: string;
   description: string;
   effort: Effort;
+  repeats?: number;
+  rest_seconds?: number;
 }
 
 export interface GeneratedPlan {

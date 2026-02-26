@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GenerateControls } from "@/app/components/GenerateControls";
 import { PlanCard } from "@/app/components/PlanCard";
-import { SegmentList } from "@/app/components/SegmentList";
 import type { GeneratedPlan, PlanRequest, PlanRow } from "@/lib/plan-types";
 import { isDurationMinutes, normalizeRequestedTags } from "@/lib/request-options";
 
@@ -210,7 +209,6 @@ export default function GeneratePlanPage() {
       {plan ? (
         <div className="space-y-4">
           <PlanCard title="Generated plan" request={generatedRequest ?? request} plan={plan} />
-          <SegmentList segments={plan.segments} />
         </div>
       ) : (
         <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-300">

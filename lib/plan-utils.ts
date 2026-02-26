@@ -9,6 +9,37 @@ export function formatSessionDate(iso: string): string {
 }
 
 export function groupSegments(segments: PlanSegment[]) {
+  const normalizedTypes = segments.map((segment) =>
+    (segment.type ?? "").toString().trim().toLowerCase(),
+  );
+
+  const hasLLMSectionTypes =
+    segments.length > 0 &&
+    normalizedTypes.every((t) => t.includes("warm") || t.includes("main") || t.includes("cool"));
+
+  if (hasLLMSectionTypes) {
+    const warm: PlanSegment[] = [];
+    const main: PlanSegment[] = [];
+    const cool: PlanSegment[] = [];
+
+    for (const segment of segments) {
+      const t = (segment.type ?? "").toString().trim().toLowerCase();
+      if (t.includes("warm")) {
+        warm.push(segment);
+      } else if (t.includes("cool")) {
+        cool.push(segment);
+      } else {
+        main.push(segment);
+      }
+    }
+
+    return [
+      { title: "Warm up", items: warm },
+      { title: "Main", items: main },
+      { title: "Cool down", items: cool },
+    ].filter((group) => group.items.length > 0);
+  }
+
   if (segments.length <= 1) {
     return [
       {

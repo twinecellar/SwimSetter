@@ -41,6 +41,11 @@ export async function POST(request: Request) {
     requested_tags: normalizeRequestedTags(reqPayload.requested_tags),
   };
 
+  const generatorVersion =
+    plan && typeof plan === "object" && typeof plan.metadata?.version === "string"
+      ? (plan.metadata.version as string)
+      : "unknown";
+
   const { data, error } = await supabase
     .from("plans")
     .insert({
@@ -48,7 +53,7 @@ export async function POST(request: Request) {
       status: "accepted",
       request: normalizedRequest,
       plan,
-      generator_version: "v1",
+      generator_version: generatorVersion,
     })
     .select("*")
     .maybeSingle();

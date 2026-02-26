@@ -9,6 +9,11 @@ Create a `.env.local` file for local development (Railway will use its own env c
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+OPENAI_API_KEY=your-openai-api-key
+
+# Optional (LLM planner)
+SWIM_PLANNER_MODEL=gpt-4.1-mini
+SWIM_PLANNER_PYTHON=./.venv/bin/python
 ```
 
 ### Supabase setup
@@ -46,4 +51,3 @@ Then open `http://localhost:3000`.
 - Complete onboarding at `/onboarding` and pick a swim level.
 - Generate a plan at `/plans/generate`, accept it, and confirm it appears on `/plans`.
 - Mark a plan as complete and add tags/rating; confirm completion is stored in Supabase.
-

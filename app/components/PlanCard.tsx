@@ -1,5 +1,6 @@
 import type { CompletionRow, GeneratedPlan, PlanRequest } from "@/lib/plan-types";
 import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
+import { groupSegments } from "@/lib/plan-utils";
 
 interface PlanCardProps {
   title: string;
@@ -18,7 +19,9 @@ export function PlanCard({
   completion,
   actions,
 }: PlanCardProps) {
-  const firstSegment = plan.segments[0];
+  const groups = groupSegments(plan.segments);
+  const totalDistanceM =
+    plan.segments.reduce((sum, segment) => sum + segment.distance_m, 0) || plan.estimated_distance_m;
   const feedbackSymbol =
     completion?.rating === 0 ? "👎" : completion?.rating === 1 ? "👍" : "No feedback";
 
@@ -39,7 +42,7 @@ export function PlanCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-slate-100">{title}</p>
-          <p className="mt-1 text-xs text-slate-400">~{plan.estimated_distance_m}m planned</p>
+          <p className="mt-1 text-xs text-slate-400">~{totalDistanceM}m planned</p>
         </div>
         {status && <SessionStatusBadge status={status} />}
       </div>
@@ -72,7 +75,30 @@ export function PlanCard({
         </div>
       )}
 
-      {firstSegment && <p className="text-sm text-slate-200">{firstSegment.description}</p>}
+      <div className="space-y-2">
+        {groups.map((group) => (
+          <section
+            key={group.title}
+            className="rounded-md border border-slate-800 bg-slate-900/50 px-3 py-2"
+          >
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                {group.title}
+              </p>
+              <p className="text-xs text-slate-400">
+                {group.items.reduce((sum, segment) => sum + segment.distance_m, 0)}m
+              </p>
+            </div>
+            <ol className="space-y-1">
+              {group.items.map((segment) => (
+                <li key={segment.id} className="text-sm text-slate-200">
+                  {segment.description}
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
 
       {completion && (
         <div className="space-y-1">
