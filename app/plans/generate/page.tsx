@@ -148,7 +148,7 @@ export default function GeneratePlanPage() {
         </p>
       )}
 
-      <div className="sticky top-3 z-10 space-y-4 rounded-lg border border-slate-800 bg-slate-950/95 p-4 backdrop-blur">
+      <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-950/95 p-4 backdrop-blur">
         <GenerateControls value={request} disabled={generating || accepting} onChange={setRequest} />
 
         <div className="flex flex-wrap gap-3">
