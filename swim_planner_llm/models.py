@@ -18,6 +18,7 @@ class SessionRequested(BaseModel):
     duration_minutes: int = Field(gt=0)
     effort: Effort
     fun_mode: FunMode
+    requested_tags: list[str] = Field(default_factory=list)
 
 
 class Step(BaseModel):
@@ -76,6 +77,7 @@ class SwimPlanInput(BaseModel):
 
     session_requested: SessionRequested
     historic_sessions: list[HistoricSession] = Field(default_factory=list)
+    requested_tags: list[str] = Field(default_factory=list)
 
 
 class LLMPlanDraftStep(BaseModel):

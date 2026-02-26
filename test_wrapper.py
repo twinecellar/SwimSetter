@@ -8,7 +8,7 @@ from swim_planner_llm import generate_swim_plan, plan_to_canonical_text
 
 DEFAULT_SYNTHETIC_PAYLOAD = {
     "session_requested": {
-        "duration_minutes": 60,
+        "duration_minutes": 25,
         "effort": "hard",
         "fun_mode": "varied",
     },

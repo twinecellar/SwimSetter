@@ -121,7 +121,7 @@ def _main_steps(
     rng: random.Random,
     risk_down: bool,
 ) -> list[Step]:
-    if req.effort == "hard":
+    if req.effort == "hard" and req.fun_mode == "straightforward":
         rep_dist = 50 if main_dist % 50 == 0 else 25
         reps = max(1, main_dist // rep_dist)
         rest = 15 if not risk_down else 20
@@ -135,6 +135,48 @@ def _main_steps(
                 rest,
                 "hard",
                 "High-intensity interval block",
+            )
+        ]
+
+    if req.effort == "hard" and req.fun_mode == "varied":
+        if main_dist >= 200:
+            first = _round_to_multiple(int(main_dist * 0.55), 25)
+            second = main_dist - first
+            second = max(25, _round_to_multiple(second, 25))
+            first = main_dist - second
+            return [
+                _step(
+                    "main-1",
+                    "intervals",
+                    max(1, first // 50),
+                    50,
+                    "freestyle",
+                    20 if risk_down else 15,
+                    "hard",
+                    "Primary hard freestyle intervals",
+                ),
+                _step(
+                    "main-2",
+                    "intervals",
+                    max(1, second // 25),
+                    25,
+                    rng.choice(["backstroke", "breaststroke", "choice", "mixed"]),
+                    20,
+                    "hard",
+                    "Secondary hard varied intervals",
+                ),
+            ]
+
+        return [
+            _step(
+                "main-1",
+                "intervals",
+                max(1, main_dist // 25),
+                25,
+                "mixed",
+                20,
+                "hard",
+                "Compact varied hard interval set",
             )
         ]
 

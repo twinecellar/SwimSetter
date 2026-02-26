@@ -5,7 +5,6 @@ from typing import Optional
 
 from pydantic import ValidationError
 
-from .fallback import build_deterministic_fallback
 from .formatter import plan_to_canonical_text
 from .llm_client import request_plan_json, request_repair_json
 from .models import LLMPlanDraft, SwimPlanInput, SwimPlanResponse
@@ -60,11 +59,11 @@ def generate_swim_plan(payload: dict, seed: Optional[int] = None) -> SwimPlanRes
             seed=seed,
         )
         return _build_valid_plan_from_llm(repair_raw, parsed_payload, seed)
-    except Exception:
-        fallback = build_deterministic_fallback(parsed_payload, seed)
-        validate_schema(fallback)
-        validate_invariants(fallback, parsed_payload.session_requested, parsed_payload.historic_sessions)
-        return fallback
+    except Exception as exc:
+        raise ValidationIssue(
+            "Plan generation failed after initial call and one repair attempt. "
+            f"Initial error: {first_error}. Repair error: {exc}"
+        ) from exc
 
 
 __all__ = ["generate_swim_plan", "plan_to_canonical_text"]
