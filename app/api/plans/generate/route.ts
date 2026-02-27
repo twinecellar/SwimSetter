@@ -120,11 +120,16 @@ export async function POST(request: Request) {
   const effort = rawEffort as Effort;
   const durationMinutes = rawDuration as PlanRequest['duration_minutes'];
 
-  const { data: profileRow } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
+  const [{ data: profileRow }, { data: completions }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+    supabase
+      .from('plan_completions')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('rating', [0, 1])
+      .order('completed_at', { ascending: false })
+      .limit(30),
+  ]);
 
   if (!profileRow) {
     return NextResponse.json(
@@ -132,14 +137,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-
-  const { data: completions } = await supabase
-    .from('plan_completions')
-    .select('*')
-    .eq('user_id', user.id)
-    .in('rating', [0, 1])
-    .order('completed_at', { ascending: false })
-    .limit(30);
 
   const requestInput: PlanRequest = {
     duration_minutes: durationMinutes,

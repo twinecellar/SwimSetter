@@ -1,21 +1,11 @@
 [phases.setup]
-# Nix's Python is "externally managed" (PEP 668), so avoid `ensurepip` and avoid
-# installing into the system site-packages in `/nix/store`.
-nixPkgs = [
-  "nodejs_20",
-  "python311",
-]
+nixPkgs = ["nodejs_20"]
 
 [phases.install]
-# Use a virtualenv so `pip install` writes into a writable prefix (not `/nix/store`).
-cmds = [
-  "npm ci",
-  "python -m venv /opt/venv",
-  "/opt/venv/bin/python -m pip install -r requirements.txt",
-]
+cmds = ["npm ci"]
 
 [phases.build]
 cmds = ["npm run build"]
 
 [start]
-cmd = "bash -lc 'export PATH=/opt/venv/bin:$PATH; npm run start'"
+cmd = "npm run start"

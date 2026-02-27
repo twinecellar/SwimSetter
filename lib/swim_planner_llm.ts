@@ -1,10 +1,11 @@
-import { spawn } from "child_process";
-import fs from "fs";
-import path from "path";
+import { generateSwimPlan } from './swim-planner/generate';
+import type { SwimPlanInput } from './swim-planner/types';
+
+// ── Public types (unchanged — consumed by app/api/plans/generate/route.ts) ────
 
 export interface SwimPlannerSessionRequested {
   duration_minutes: number;
-  effort: "easy" | "medium" | "hard";
+  effort: 'easy' | 'medium' | 'hard';
   requested_tags: string[];
 }
 
@@ -25,12 +26,12 @@ export interface SwimPlannerPayload {
 
 export interface SwimPlannerStep {
   step_id: string;
-  kind: "continuous" | "intervals";
+  kind: 'continuous' | 'intervals';
   reps: number;
   distance_per_rep_m: number;
   stroke: string;
   rest_seconds: number | null;
-  effort: "easy" | "medium" | "hard";
+  effort: 'easy' | 'medium' | 'hard';
   description: string;
 }
 
@@ -52,73 +53,16 @@ export interface SwimPlannerResponse {
   };
 }
 
-function resolvePythonCommand(): string {
-  const envOverride = process.env.SWIM_PLANNER_PYTHON;
-  if (envOverride && envOverride.trim()) return envOverride.trim();
-
-  const venvPython = path.join(process.cwd(), ".venv", "bin", "python");
-  if (fs.existsSync(venvPython)) return venvPython;
-
-  return "python3";
-}
+// ── Implementation ────────────────────────────────────────────────────────────
 
 export async function runSwimPlannerLLM(
   payload: SwimPlannerPayload,
 ): Promise<SwimPlannerResponse> {
-  const python = resolvePythonCommand();
-  const entry = path.join(process.cwd(), "scripts", "swim_planner_llm_entry.py");
-
-  return await new Promise((resolve, reject) => {
-    const child = spawn(python, [entry], {
-      stdio: ["pipe", "pipe", "pipe"],
-      env: process.env,
-    });
-
-    let stdout = "";
-    let stderr = "";
-
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-
-    child.on("error", (err) => {
-      reject(
-        new Error(
-          `Failed to spawn python (${python}). ${err.message}`,
-        ),
-      );
-    });
-
-    child.on("close", (code) => {
-      if (code !== 0) {
-        reject(
-          new Error(
-            `swim_planner_llm_entry exited with code ${code}. ${stderr || stdout}`,
-          ),
-        );
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(stdout) as SwimPlannerResponse;
-        resolve(parsed);
-      } catch (err: any) {
-        reject(
-          new Error(
-            `Failed to parse swim_planner_llm output as JSON. ${err?.message ?? err}. stderr=${stderr}`,
-          ),
-        );
-      }
-    });
-
-    child.stdin.write(JSON.stringify(payload));
-    child.stdin.end();
-  });
+  const input: SwimPlanInput = {
+    session_requested: payload.session_requested,
+    historic_sessions: payload.historic_sessions,
+    requested_tags: payload.requested_tags,
+  };
+  const plan = await generateSwimPlan(input);
+  return plan as SwimPlannerResponse;
 }
-

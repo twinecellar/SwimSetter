@@ -1,8 +1,8 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "export PATH=/opt/venv/bin:$PATH && npm run build"
+buildCommand = "npm run build"
 
 [deploy]
-startCommand = "export PATH=/opt/venv/bin:$PATH && npm run start"
+startCommand = "npm run start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
