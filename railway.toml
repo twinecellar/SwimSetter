@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "export PATH=/opt/venv/bin:$PATH && npm ci && npm run build"
+buildCommand = "export PATH=/opt/venv/bin:$PATH && npm run build"
 
 [deploy]
 startCommand = "export PATH=/opt/venv/bin:$PATH && npm run start"
