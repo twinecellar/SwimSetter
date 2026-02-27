@@ -15,30 +15,16 @@ function getLLMFailureResponse(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '');
   const lower = message.toLowerCase();
 
-  if (lower.includes('openai_api_key is missing')) {
+  if (lower.includes('anthropic_api_key is missing')) {
     return {
-      error: 'Planner configuration error: OPENAI_API_KEY is missing.',
+      error: 'Planner configuration error: ANTHROPIC_API_KEY is missing.',
       code: 'LLM_MISSING_API_KEY',
     };
   }
 
-  if (lower.includes('failed to spawn python') || lower.includes('enoent')) {
+  if (lower.includes('connection error') || lower.includes('econnrefused')) {
     return {
-      error: 'Planner runtime error: Python executable was not found.',
-      code: 'LLM_PYTHON_UNAVAILABLE',
-    };
-  }
-
-  if (lower.includes('openai package not available')) {
-    return {
-      error: 'Planner runtime error: Python dependency `openai` is missing.',
-      code: 'LLM_PYTHON_DEPENDENCY_MISSING',
-    };
-  }
-
-  if (lower.includes('connection error')) {
-    return {
-      error: 'Planner could not reach OpenAI. Check network and API availability.',
+      error: 'Planner could not reach Anthropic. Check network and API availability.',
       code: 'LLM_CONNECTION_ERROR',
     };
   }

@@ -1,32 +1,45 @@
-// Port of swim_planner_llm/wrapper.py + llm_client.py (_chat_completion only).
-// OpenAI client is a module-level singleton — created once, reused across requests.
+// Port of swim_planner_llm/llm_client_claude.py + wrapper.py
+// Anthropic client is a module-level singleton — created once, reused across requests.
 
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import type { LLMPlanDraft, SwimPlanInput, SwimPlanResponse } from './types';
 import { SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt, summarizeHistory } from './prompt';
 import { enforceAndNormalize, ValidationIssue, validateInvariants } from './validate';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const MODEL = process.env.SWIM_PLANNER_MODEL ?? 'gpt-4.1-mini';
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const MODEL = process.env.SWIM_PLANNER_CLAUDE_MODEL ?? 'claude-haiku-4-5-20251001';
+
+// ── Markdown fence stripping (Claude sometimes wraps output in ``` fences) ────
+
+function stripMarkdownFences(text: string): string {
+  const stripped = text.trim();
+  if (!stripped.startsWith('```')) return stripped;
+  const firstNewline = stripped.indexOf('\n');
+  if (firstNewline === -1) return stripped;
+  let inner = stripped.slice(firstNewline + 1);
+  if (inner.endsWith('```')) {
+    inner = inner.slice(0, inner.lastIndexOf('```'));
+  }
+  return inner.trim();
+}
 
 // ── LLM call ──────────────────────────────────────────────────────────────────
 
-async function chatCompletion(messages: { role: 'system' | 'user'; content: string }[]): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is missing');
+async function claudeCompletion(system: string, user: string): Promise<string> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY is missing');
   }
 
-  const response = await openai.chat.completions.create({
+  const response = await anthropic.messages.create({
     model: MODEL,
-    messages,
-    temperature: 0,
-    response_format: { type: 'json_object' },
-    max_tokens: 1200,
+    max_tokens: 4096,
+    system,
+    messages: [{ role: 'user', content: user }],
   });
 
-  const content = response.choices[0]?.message?.content;
+  const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
   if (!content) throw new ValidationIssue('Model returned empty response');
-  return content;
+  return stripMarkdownFences(content);
 }
 
 // ── Parse + validate ──────────────────────────────────────────────────────────
@@ -53,18 +66,15 @@ function buildValidPlanFromLLM(rawText: string, payload: SwimPlanInput): SwimPla
 
 export async function generateSwimPlan(payload: SwimPlanInput): Promise<SwimPlanResponse> {
   const historySummary = summarizeHistory(payload.historic_sessions);
-
-  const messages: { role: 'system' | 'user'; content: string }[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: buildUserPrompt(payload, historySummary) },
-  ];
+  const system = SYSTEM_PROMPT;
+  const user = buildUserPrompt(payload, historySummary);
 
   let firstRaw = '';
   let firstError = '';
 
   // First attempt
   try {
-    firstRaw = await chatCompletion(messages);
+    firstRaw = await claudeCompletion(system, user);
     return buildValidPlanFromLLM(firstRaw, payload);
   } catch (err: any) {
     firstError = err?.message ?? String(err);
@@ -72,11 +82,8 @@ export async function generateSwimPlan(payload: SwimPlanInput): Promise<SwimPlan
 
   // Repair attempt
   try {
-    const repairMessages: { role: 'system' | 'user'; content: string }[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildRepairPrompt(firstRaw || '<empty>', firstError) },
-    ];
-    const repairRaw = await chatCompletion(repairMessages);
+    const repairUser = buildRepairPrompt(firstRaw || '<empty>', firstError);
+    const repairRaw = await claudeCompletion(system, repairUser);
     return buildValidPlanFromLLM(repairRaw, payload);
   } catch (repairErr: any) {
     throw new ValidationIssue(

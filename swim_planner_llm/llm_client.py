@@ -10,7 +10,11 @@ from .models import HistoricSession, SwimPlanInput
 from .style_inference import infer_prefer_varied_from_payload
 
 SYSTEM_PROMPT = (
-    "You are a swim session planner. You must return valid JSON matching the provided schema. "
+    "You are an expert swimming coach with deep knowledge of energy systems, periodization, "
+    "and effective swim session design. Your plans follow sound coaching principles: "
+    "progressive warm-ups that prime the body for work, main sets matched to the target energy "
+    "system, and genuine cool-downs that aid recovery and lactate clearance. "
+    "You must return valid JSON matching the provided schema exactly. "
     "Do not include markdown, comments, explanations, or extra keys."
 )
 
@@ -114,26 +118,57 @@ def _extract_distance(history: HistoricSession) -> Optional[int]:
     return value if isinstance(value, int) and value > 0 else None
 
 
+def _extract_main_set_kinds(history: HistoricSession) -> set[str]:
+    steps = (
+        (history.session_plan or {})
+        .get("sections", {})
+        .get("main_set", {})
+        .get("steps", [])
+    )
+    return {s.get("kind") for s in steps if isinstance(s, dict) and s.get("kind")}
+
+
+def _extract_main_set_strokes(history: HistoricSession) -> set[str]:
+    steps = (
+        (history.session_plan or {})
+        .get("sections", {})
+        .get("main_set", {})
+        .get("steps", [])
+    )
+    return {s.get("stroke") for s in steps if isinstance(s, dict) and s.get("stroke")}
+
+
 def summarize_history(historic_sessions: list[HistoricSession]) -> str:
     up_distances: list[int] = []
     down_distances: list[int] = []
     up_tags: set[str] = set()
     down_tags: set[str] = set()
     disliked_long_hard_continuous = False
+    liked_interval_sessions = 0
+    liked_continuous_sessions = 0
+    liked_stroke_counts: dict[str, int] = {}
 
     for item in historic_sessions:
         d = _extract_distance(item)
         tags = {t.strip().lower() for t in item.tags if t and t.strip()}
+        kinds = _extract_main_set_kinds(item)
+        strokes = _extract_main_set_strokes(item)
 
         if item.thumb == 1:
             if d:
                 up_distances.append(d)
             up_tags.update(tags)
+            if "intervals" in kinds:
+                liked_interval_sessions += 1
+            elif "continuous" in kinds:
+                liked_continuous_sessions += 1
+            for stroke in strokes:
+                if stroke not in ("mixed", "choice"):
+                    liked_stroke_counts[stroke] = liked_stroke_counts.get(stroke, 0) + 1
         else:
             if d:
                 down_distances.append(d)
             down_tags.update(tags)
-
             if {"pace-too-fast", "long", "tiring"} & tags:
                 disliked_long_hard_continuous = True
 
@@ -163,6 +198,19 @@ def summarize_history(historic_sessions: list[HistoricSession]) -> str:
     if disliked_long_hard_continuous:
         guidance.append("Avoid long hard continuous main sets; prefer intervals instead.")
 
+    if liked_interval_sessions > liked_continuous_sessions:
+        guidance.append("Historic preference: interval-based main sets over continuous.")
+    elif liked_continuous_sessions > liked_interval_sessions:
+        guidance.append("Historic preference: continuous main sets over intervals.")
+
+    if liked_stroke_counts:
+        top_strokes = sorted(
+            liked_stroke_counts.keys(),
+            key=lambda s: liked_stroke_counts[s],
+            reverse=True,
+        )[:2]
+        guidance.append(f"Preferred strokes in liked sessions: {top_strokes}.")
+
     return " ".join(guidance)
 
 
@@ -187,28 +235,90 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
 
     hint_map = {
         "technique": (
-            "Include drill-oriented or form-focused language, especially in warm_up "
-            "or early main_set."
+            "Build the main_set as a drill circuit with 3-5 distinct drill steps. "
+            "Draw from the following drill repertoire — choose whichever complement the "
+            "session effort and style: "
+            "Kick (hold a float, flutter kick from the hips — tight kick, toes pointed, "
+            "knees just below the surface); "
+            "Pull (pull buoy between thighs, no kick — focus on high-elbow catch and "
+            "full extension on entry); "
+            "Fists (swim with clenched fists to engage the forearm and build feel for "
+            "the catch, relax on recovery); "
+            "Front Scull (arms extended, trace a figure-8 to feel pressure on the palm "
+            "and develop water feel); "
+            "Mid Scull (elbows bent at 90°, figure-8 pattern at mid-stroke to strengthen "
+            "the catch); "
+            "Doggy Paddle (arms stay underwater throughout, focus on body rotation and "
+            "keeping hips high); "
+            "Single Arm (one arm at the side, stroke with the other — develop rotation "
+            "and balance, switch arms each length); "
+            "Kick on Side (lie on your side, lower arm extended, kick and rotate to "
+            "breathe — addresses crossover and improves streamlining). "
+            "Each step description must cue the specific drill mechanics, not just effort. "
+            "Aim for variety across different movement patterns (kick, pull, catch, rotation)."
         ),
         "speed": (
-            "Bias the main_set toward shorter interval repeats with firmer effort "
-            "and controlled rest."
+            "Target the phosphocreatine and fast-twitch systems. Use 50m repeats at "
+            "near-maximal effort with full recovery (30-60s rest) so quality is maintained "
+            "across all reps. 6-12 reps is typical. Descriptions should cue explosive starts, "
+            "high stroke rate, and a strong finish."
         ),
         "endurance": (
-            "Bias toward longer repeats or more continuous aerobic structure, within "
-            "historically tolerated volume."
+            "Build aerobic base. Use 150-400m repeats or sustained continuous swimming with "
+            "short rest (10-20s). Effort stays controlled and sub-threshold throughout. "
+            "Descriptions should emphasise rhythm, controlled breathing, and maintaining "
+            "good form under fatigue."
         ),
-        "recovery": "Use easy pacing, generous rest, and simple structure.",
+        "recovery": (
+            "Active recovery session. Keep everything easy and predictable. "
+            "Prefer continuous swimming over intervals. Use generous rest between any effort "
+            "changes (45-60s). Target the low end of the distance range. No intensity spikes."
+        ),
         "fun": (
-            "Use engaging but still clear set descriptions; mild variation is acceptable "
-            "if compatible with inferred style guidance."
+            "Create an engaging, varied session. Mix distances, formats, strokes, or drill "
+            "types across steps to keep interest high — e.g. a kick set followed by fist "
+            "drill followed by a build swim. Descriptions should be encouraging and "
+            "specific about what the swimmer is doing and why."
         ),
-        "steady": "Prefer repeatable, even-paced aerobic efforts over abrupt pace changes.",
-        "short": "Keep the plan efficient and avoid unnecessary extra steps.",
-        "hard": "Express intensity through interval density or reduced rest, not excessive volume.",
-        "easy": "Keep effort controlled and low stress.",
-        "freestyle": "Prefer freestyle in the main_set where possible.",
-        "mixed": "Allow mixed stroke usage where appropriate.",
+        "steady": (
+            "Aerobic threshold pace. All reps at the same controlled, repeatable effort with "
+            "consistent rest. Avoid pyramids, descending rest, or mixed pacing. Descriptions "
+            "should emphasise holding a steady tempo."
+        ),
+        "short": "Efficient structure. Minimise transition steps. Prioritise quality over quantity.",
+        "hard": (
+            "High intensity. Use short rest (10-20s) between intervals or reduce rep distance "
+            "so quality is maintained throughout. Descriptions should cue maximum sustainable "
+            "effort and strong body position."
+        ),
+        "easy": "Low intensity throughout. Prioritise smooth technique and controlled breathing over pace.",
+        "freestyle": "Use freestyle as the primary stroke in the main_set. Only deviate for explicit drill steps.",
+        "mixed": "Rotate strokes across steps. Include at least two different strokes in the main_set.",
+        "butterfly": (
+            "Include butterfly in at least one main_set step. Use short distances (25-50m per "
+            "rep) given its technical demands and energy cost. Describe body undulation and "
+            "timing cues."
+        ),
+        "kick": (
+            "Include a kick-focused step (no arm pull; streamline or kickboard). Place in "
+            "warm_up or as an early main_set step. Descriptions should cue body position, "
+            "kick depth, and ankle flexibility."
+        ),
+        "pull": (
+            "Include a pull-focused step (pull buoy, no kick) in the main_set to emphasise "
+            "catch and upper-body engagement. Good for isolating the pull phase and building "
+            "feel for the water."
+        ),
+        "threshold": (
+            "Target lactate threshold. Use 200-400m repeats at a firm, comfortably hard effort "
+            "with short rest (15-30s). Descriptions should cue holding even splits and "
+            "staying relaxed under pressure."
+        ),
+        "sprints": (
+            "Maximum effort short repeats (50m). Full recovery between each (45-90s). "
+            "Focus on explosive power and peak speed. 6-10 reps is typical. Describe "
+            "drive off the wall and maintaining stroke rate to the flags."
+        ),
     }
 
     hints = [hint_map[tag] for tag in requested_tags if tag in hint_map]
@@ -230,11 +340,83 @@ def _distance_guidance(duration_minutes: int, effort: str) -> str:
 
 def _effort_hint(effort: str) -> str:
     hints_map = {
-        "easy": "Prioritize relaxed pacing, longer recoveries, and low complexity.",
-        "medium": "Use steady aerobic work with moderate rest and controlled intensity.",
-        "hard": "Increase interval density or reduce rest; avoid excessive volume spikes.",
+        "easy": (
+            "Aerobic recovery pace — all steps should feel comfortable throughout. "
+            "Warm-up: 1-2 easy continuous swims (100-200m each). "
+            "Main set: longer repeats (100-200m each) or continuous swimming with 15-30s rest. "
+            "Cool-down: very easy choice of stroke. No intensity spikes anywhere."
+        ),
+        "medium": (
+            "Steady aerobic work at a comfortably challenging pace the swimmer can sustain. "
+            "Warm-up: easy continuous build, optionally ending with 4×50m progressive activation. "
+            "Main set: 100-200m repeats with 15-30s rest, or threshold-style longer efforts. "
+            "Cool-down: easy swimming to begin lactate clearance."
+        ),
+        "hard": (
+            "High-intensity training targeting the anaerobic threshold or speed systems. "
+            "Warm-up is critical: include an easy build and a brief activation piece "
+            "(e.g. 4-6×50m at medium effort) before the main set. "
+            "Main set: short-to-medium repeats (50-100m each) with adequate rest (20-45s) to "
+            "preserve quality across all reps — quality over volume. "
+            "Total session volume should be lower than an equivalent easy or medium session. "
+            "Cool-down: minimum 100m of easy continuous swimming for lactate clearance."
+        ),
     }
     return hints_map.get(effort, "Use balanced effort progression across sections.")
+
+
+def _section_proportion_guidance(effort: str, duration_minutes: int) -> str:
+    pace_by_effort = {"easy": (25, 35), "medium": (30, 40), "hard": (35, 45)}
+    lo_ppm, hi_ppm = pace_by_effort.get(effort, (30, 40))
+    target = round(duration_minutes * (lo_ppm + hi_ppm) / 2 / 50) * 50
+
+    warm_frac = {"easy": 0.22, "medium": 0.20, "hard": 0.22}.get(effort, 0.20)
+    cool_frac = {"easy": 0.16, "medium": 0.13, "hard": 0.10}.get(effort, 0.15)
+
+    warm = max(round(target * warm_frac / 50) * 50, 50)
+    cool = max(round(target * cool_frac / 50) * 50, 50)
+    main = target - warm - cool
+    if main < 50:
+        main = 50
+
+    return (
+        f"Suggested section distances for this session (all must be exact multiples of 50m): "
+        f"warm_up ~{warm}m, main_set ~{main}m, cool_down ~{cool}m "
+        f"(total ~{warm + main + cool}m)."
+    )
+
+
+def _session_type_override(requested_tags: list[str], effort: str) -> str:
+    if "technique" not in requested_tags:
+        return ""
+
+    effort_expression = {
+        "easy": (
+            "Use generous rest between drill reps (30-45s) and low rep counts. "
+            "Focus entirely on quality of movement, not speed."
+        ),
+        "medium": (
+            "Use moderate rest between drill reps (20-30s). "
+            "Aim for controlled, consistent mechanics across all reps."
+        ),
+        "hard": (
+            "Use shorter rest between drill reps (10-20s) and higher rep counts "
+            "to build technique under fatigue. Still prioritise clean mechanics over pace."
+        ),
+    }.get(effort, "Adjust rest to match the requested effort level.")
+
+    return (
+        "SESSION TYPE: TECHNIQUE / DRILL CIRCUIT\n"
+        "This overrides the default effort-based main_set structure.\n"
+        "The main_set MUST contain 3-5 steps, each using a DIFFERENT named drill type.\n"
+        "Valid drill types: Kick, Pull, Fists, Front Scull, Mid Scull, "
+        "Doggy Paddle, Single Arm, Kick on Side.\n"
+        "Do NOT use plain freestyle interval repeats in the main_set.\n"
+        "Do NOT repeat the same drill type in more than one step.\n"
+        f"The effort value '{effort}' is expressed as: {effort_expression}\n"
+        "Each step description must name the drill and explain its specific mechanics "
+        "and the coaching cue the swimmer should focus on."
+    )
 
 
 def _style_hint(prefer_varied: bool) -> str:
@@ -260,19 +442,39 @@ def build_user_prompt(
     style_hint = _style_hint(prefer_varied)
     distance_guidance = _distance_guidance(duration, effort)
     tag_hints = _requested_tag_hints(requested_tags)
+    section_proportions = _section_proportion_guidance(effort, duration)
+    session_override = _session_type_override(requested_tags, effort)
     inferred_style = "varied" if prefer_varied else "straightforward"
+
+    override_block = (
+        f"SESSION OVERRIDE (takes precedence over EFFORT GUIDANCE for main_set structure):\n"
+        f"{session_override}\n\n"
+        if session_override
+        else ""
+    )
+
+    effort_block = (
+        f"EFFORT GUIDANCE:\n"
+        f"main_set structure is defined by the SESSION OVERRIDE — apply effort '{effort}' "
+        f"as described there.\n"
+        f"For warm_up and cool_down sections: {effort_hint}\n\n"
+        if session_override
+        else f"EFFORT GUIDANCE:\n{effort_hint}\n\n"
+    )
 
     return (
         "Generate a personalised swim session plan.\n\n"
         "DECISION PRIORITY (follow in this order):\n"
         "1. Return valid JSON matching the schema exactly.\n"
         "2. Match requested duration_minutes.\n"
-        "3. Match requested effort.\n"
-        "4. Match inferred session style from requested tags + history.\n"
-        "5. Use history to prefer previously successful structure and volume.\n"
-        "6. Apply requested tags where compatible.\n\n"
+        "3. If a SESSION OVERRIDE is present, honour it for main_set structure before applying effort guidance.\n"
+        "4. Match requested effort (expressed through rest duration and rep density, not set type).\n"
+        "5. Match inferred session style from requested tags + history.\n"
+        "6. Use history to prefer previously successful structure and volume.\n"
+        "7. Apply remaining requested tags where compatible.\n\n"
         "REQUEST:\n"
         f"{json.dumps(payload.session_requested.model_dump(), sort_keys=True)}\n\n"
+        f"{override_block}"
         "INFERRED STYLE:\n"
         f"{inferred_style}\n\n"
         "REQUESTED TAGS:\n"
@@ -280,12 +482,13 @@ def build_user_prompt(
         f"{tag_hints}\n\n"
         "HISTORIC GUIDANCE:\n"
         f"{history_summary}\n\n"
-        "EFFORT GUIDANCE:\n"
-        f"{effort_hint}\n\n"
+        f"{effort_block}"
         "STYLE GUIDANCE:\n"
         f"{style_hint}\n\n"
         "DISTANCE GUIDANCE:\n"
         f"{distance_guidance}\n\n"
+        "SECTION PROPORTIONS:\n"
+        f"{section_proportions}\n\n"
         "HARD CONSTRAINTS:\n"
         "- Return exactly ONE JSON object.\n"
         "- Do not include markdown.\n"
@@ -297,18 +500,26 @@ def build_user_prompt(
         "- Every step must include all required fields.\n"
         "- Sum of all step distances must equal section_distance_m.\n"
         "- Sum of all sections must equal estimated_distance_m.\n"
-        "- All distances must be divisible by 50.\n"
+        "- All distances must be exact multiples of 50 (50, 100, 150, 200, ...): "
+        "distance_per_rep_m, section_distance_m, and estimated_distance_m.\n"
+        "- Minimum distance_per_rep_m is 50m. Never use 25m or any non-multiple of 50.\n"
+        "- Never use fractional distances. All distance values must be whole integers.\n"
         "- reps must be > 0.\n"
-        "- distance_per_rep_m must be > 0.\n"
+        "- distance_per_rep_m must be >= 50.\n"
         "- rest_seconds must be null or >= 0.\n"
         "- Allowed kind values: continuous, intervals.\n"
-        "- Allowed stroke values: freestyle, backstroke, breaststroke, mixed, choice.\n"
-        "- Allowed effort values: easy, medium, hard.\n\n"
+        "- Allowed stroke values: freestyle, backstroke, breaststroke, butterfly, mixed, choice.\n"
+        "- Allowed effort values: easy, medium, hard.\n"
+        "- All warm_up steps must use effort: easy.\n"
+        "- All cool_down steps must use effort: easy.\n\n"
         "SESSION-SPECIFIC RULES:\n"
-        "- If inferred style is straightforward: main_set must contain one clear pattern only.\n"
-        "- If inferred style is varied: main_set should usually contain 2-3 distinct steps with clear variation.\n"
+        "- If a SESSION OVERRIDE is present: its rules for main_set structure are mandatory and override style rules below.\n"
+        "- If no SESSION OVERRIDE: straightforward style → main_set must contain one clear pattern only.\n"
+        "- If no SESSION OVERRIDE: varied style → main_set should contain 2-3 distinct steps with clear variation.\n"
+        "- Step descriptions for drill steps must name the drill and explain its mechanics — longer descriptions are expected and required.\n"
         "- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n"
-        "- For hard effort, increase intensity using interval density or shorter rest, not excessive distance.\n"
+        "- For hard effort without a SESSION OVERRIDE, increase intensity using interval density or shorter rest, not excessive distance.\n"
+        "- For hard sessions, warm_up must include a short activation piece before the main set.\n"
         "- Prefer expressing requested tag intent in the main_set first.\n\n"
         "OUTPUT SHAPE EXAMPLE:\n"
         f"{schema_excerpt}\n\n"
