@@ -4,7 +4,7 @@ import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
 import { PlanBreakdown } from "@/app/components/PlanBreakdown";
 
 interface PlanCardProps {
-  title: string;
+  title: React.ReactNode;
   request?: PlanRequest;
   plan: Pick<GeneratedPlan, "duration_minutes" | "estimated_distance_m" | "segments">;
   status?: "planned" | "in_progress" | "completed";

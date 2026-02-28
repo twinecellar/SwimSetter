@@ -22,6 +22,18 @@ function formatRest(seconds: number | undefined): string | null {
   return s === 0 ? `${m}m rest` : `${m}:${String(s).padStart(2, "0")} rest`;
 }
 
+
+function boldDescription(description: string): React.ReactNode {
+  const idx = description.indexOf(" - ");
+  if (idx === -1) return <strong className="font-semibold text-slate-100">{description}</strong>;
+  return (
+    <>
+      <strong className="font-semibold text-slate-100">{description.slice(0, idx)}</strong>
+      {description.slice(idx)}
+    </>
+  );
+}
+
 function SegmentRow({ segment }: { segment: PlanSegment }) {
   const color = EFFORT_SOLID[segment.effort as Effort] ?? "#64748b";
   const rest = formatRest(segment.rest_seconds);
@@ -33,7 +45,7 @@ function SegmentRow({ segment }: { segment: PlanSegment }) {
         style={{ backgroundColor: color }}
         aria-label={segment.effort}
       />
-      <span className="flex-1 text-sm text-slate-200">{segment.description}</span>
+      <span className="flex-1 text-sm text-slate-200">{boldDescription(segment.description)}</span>
       {rest && (
         <span className="flex-shrink-0 text-xs text-slate-500 tabular-nums">{rest}</span>
       )}

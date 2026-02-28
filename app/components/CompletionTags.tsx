@@ -17,20 +17,8 @@ export function CompletionTags({
   onCustomTagChange,
   onAddCustomTag,
 }: CompletionTagsProps) {
-  const fieldStyle = {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
-    color: "#0f172a",
-  };
-
-  const actionStyle = {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
-    color: "#334155",
-  };
-
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <label className="block text-sm font-medium text-slate-200">
         Tags
         <span className="ml-1 text-xs font-normal text-slate-400">
@@ -38,18 +26,17 @@ export function CompletionTags({
         </span>
       </label>
 
-      <div className="flex flex-wrap gap-2 text-xs">
+      <div className="flex flex-wrap gap-2">
         {suggested.map((tag) => (
           <button
             key={tag}
             type="button"
             onClick={() => onToggleTag(tag)}
-            className={`rounded-full px-3 py-1 ${
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               selected.includes(tag)
-                ? "bg-sky-500 text-slate-950"
-                : "bg-slate-900 text-slate-200"
+                ? "border-sky-500 bg-sky-500/20 text-sky-300"
+                : "border-slate-700 bg-slate-800/60 text-slate-300"
             }`}
-            style={!selected.includes(tag) ? actionStyle : undefined}
           >
             {tag}
           </button>
@@ -62,14 +49,12 @@ export function CompletionTags({
           value={customTag}
           onChange={(event) => onCustomTagChange(event.target.value)}
           placeholder="Custom tag"
-          className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
-          style={fieldStyle}
+          className="flex-1 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-sky-500"
         />
         <button
           type="button"
           onClick={onAddCustomTag}
-          className="rounded-md border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-sky-500"
-          style={actionStyle}
+          className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-xs font-medium text-slate-300 hover:border-sky-500 hover:text-sky-300"
         >
           Add
         </button>

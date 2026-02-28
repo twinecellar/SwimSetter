@@ -6,23 +6,22 @@ import { CompletionTags } from "@/app/components/CompletionTags";
 
 interface CompletionFormProps {
   planId: string;
+  children?: React.ReactNode;
 }
 
-const SUGGESTED_TAGS = [
-  "fun",
-  "easy",
-  "hard",
-  "long",
-  "short",
+const SUGGESTED_TAGS = ["fun", "easy", "hard", "long", "short"];
+
+const RATING_OPTIONS = [
+  { value: 1 as const, label: "Good session", img: "/thumb_up.png" },
+  { value: 0 as const, label: "Rough one",    img: "/thumb_down.png" },
 ];
 
-export function CompletionForm({ planId }: CompletionFormProps) {
+export function CompletionForm({ planId, children }: CompletionFormProps) {
   const router = useRouter();
   const [rating, setRating] = useState<0 | 1>(1);
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   const [notes, setNotes] = useState("");
-  const [notesOpen, setNotesOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +40,7 @@ export function CompletionForm({ planId }: CompletionFormProps) {
     setCustomTag("");
   }
 
-  async function saveCompletion(includeNotes: boolean) {
+  async function saveCompletion() {
     setSaving(true);
     setError(null);
 
@@ -52,7 +51,7 @@ export function CompletionForm({ planId }: CompletionFormProps) {
         body: JSON.stringify({
           rating,
           tags,
-          notes: includeNotes ? notes.trim() || null : null,
+          notes: notes.trim() || null,
         }),
       });
 
@@ -75,103 +74,75 @@ export function CompletionForm({ planId }: CompletionFormProps) {
     }
   }
 
-  const secondaryButtonStyle = {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
-    color: "#334155",
-  };
-
-  const noteToggleStyle = {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
-    color: "#334155",
-  };
-
-  const noteFieldStyle = {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
-    color: "#0f172a",
-  };
-
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        void saveCompletion(true);
+        void saveCompletion();
       }}
-      className="space-y-6"
+      className="space-y-4"
     >
-      <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/30 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <label className="block text-sm font-medium text-slate-200">Feedback</label>
-          <img
-            src={rating === 1 ? "/thumb_up.png" : "/thumb_down.png"}
-            alt={rating === 1 ? "thumbs up" : "thumbs down"}
-            width={20}
-            height={20}
-          />
-        </div>
-        <div className="flex gap-1.5">
-          {([
-            { value: 1 as const, label: "Thumbs up", img: "/thumb_up.png" },
-            { value: 0 as const, label: "Thumbs down", img: "/thumb_down.png" },
-          ]).map((option) => (
+      {/* Rating */}
+      <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+        <label className="block text-sm font-medium text-slate-200">How was it?</label>
+        <div className="flex gap-3">
+          {RATING_OPTIONS.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => setRating(option.value)}
-              aria-label={option.label}
-              className="flex h-11 w-20 items-center justify-center rounded-md border transition-colors"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md border py-3 text-sm font-medium transition-colors"
               style={{
-                backgroundColor: rating === option.value ? "rgba(14,165,233,0.1)" : "#f8fafc",
-                borderColor: rating === option.value ? "#0ea5e9" : "#e2e8f0",
-                opacity: rating === option.value ? 1 : 0.5,
+                backgroundColor: rating === option.value ? "rgba(14,165,233,0.12)" : "transparent",
+                borderColor: rating === option.value ? "#0ea5e9" : "#334155",
+                color: rating === option.value ? "#38bdf8" : "#94a3b8",
               }}
             >
-              <img src={option.img} alt={option.label} width={24} height={24} />
+              <img src={option.img} alt="" width={20} height={20} />
+              {option.label}
             </button>
           ))}
         </div>
       </section>
 
-      <CompletionTags
-        selected={tags}
-        suggested={SUGGESTED_TAGS}
-        customTag={customTag}
-        onToggleTag={toggleTag}
-        onCustomTagChange={setCustomTag}
-        onAddCustomTag={addCustomTag}
-      />
+      {children}
 
-      <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/30 p-4">
-        <button
-          type="button"
-          onClick={() => setNotesOpen((prev) => !prev)}
-          className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium"
-          style={noteToggleStyle}
-        >
-          {notesOpen ? "Hide notes" : "Any notes?"}
-        </button>
+      {/* Tags */}
+      <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+        <CompletionTags
+          selected={tags}
+          suggested={SUGGESTED_TAGS}
+          customTag={customTag}
+          onToggleTag={toggleTag}
+          onCustomTagChange={setCustomTag}
+          onAddCustomTag={addCustomTag}
+        />
+      </section>
 
-        {notesOpen && (
-          <textarea
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            rows={3}
-            className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
-            placeholder="Anything you want to remember for next time?"
-            style={noteFieldStyle}
-          />
-        )}
+      {/* Notes */}
+      <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+        <label className="block text-sm font-medium text-slate-200">Notes</label>
+        <textarea
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          rows={3}
+          className="w-full rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-sky-500"
+          placeholder="Anything to remember for next time? (optional)"
+        />
       </section>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="space-y-2">
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
+          className="flex w-full items-center justify-center rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          style={{
+            backgroundColor: "#10b981",
+            borderColor: "#10b981",
+            color: "#111827",
+          }}
         >
           {saving ? "Saving..." : "Save completion"}
         </button>
@@ -179,8 +150,7 @@ export function CompletionForm({ planId }: CompletionFormProps) {
           type="button"
           disabled={saving}
           onClick={() => router.push("/?return=completion")}
-          className="inline-flex items-center rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 disabled:opacity-60"
-          style={secondaryButtonStyle}
+          className="flex w-full items-center justify-center rounded-md border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 disabled:opacity-60"
         >
           Cancel
         </button>

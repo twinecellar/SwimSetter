@@ -56,7 +56,8 @@ export function AuthForm({ inviteToken }: AuthFormProps) {
 
       if (!res.ok) {
         setStatus("error");
-        setMessage(json.error ?? "Failed to validate invite.");
+        const msg = json.error ?? "Failed to validate invite.";
+        setMessage(json.detail ? `${msg} (${json.detail})` : msg);
         return;
       }
 
@@ -95,9 +96,9 @@ export function AuthForm({ inviteToken }: AuthFormProps) {
       {isSignUp ? (
         <>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">Create your account</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Let&apos;s get swimming</h2>
             <p className="mt-1 text-sm text-slate-400">
-              You&apos;ve been invited to SwimSetter. Set up your account below.
+              You&apos;ve been invitited to jump in. Set up here.
             </p>
           </div>
 
@@ -132,7 +133,14 @@ export function AuthForm({ inviteToken }: AuthFormProps) {
               disabled={status === "loading" || !email || !password}
               className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60"
             >
-              {status === "loading" ? "Creating account..." : "Create account"}
+              {status === "loading" ? (
+                "Starting swimming..."
+              ) : (
+                <>
+                  <img src="/logos/Fire_light.svg" alt="" width={16} height={16} className="mr-2" />
+                  Start swimming
+                </>
+              )}
             </button>
           </form>
 

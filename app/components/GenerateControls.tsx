@@ -1,8 +1,10 @@
 "use client";
 
-import type { Effort, PlanRequest } from "@/lib/plan-types";
+import type { DurationMinutes, Effort, PlanRequest } from "@/lib/plan-types";
 import { effortButtonStyle } from "@/lib/effort-colors";
 import { REQUESTED_TAG_OPTIONS } from "@/lib/request-options";
+
+const DURATION_PRESETS: DurationMinutes[] = [20, 30, 45, 60];
 
 function ClockIcon() {
   return (
@@ -67,6 +69,12 @@ export function GenerateControls({
     };
   }
 
+  function durationButtonStyle(selected: boolean): React.CSSProperties {
+    return selected
+      ? { backgroundColor: "#0ea5e9", borderColor: "#0ea5e9", color: "#111827" }
+      : { backgroundColor: "transparent", borderColor: "#475569", color: "#94a3b8" };
+  }
+
   function getChipStyles(selected: boolean) {
     return selected
       ? { backgroundColor: "#0ea5e9", color: "#ffffff", borderColor: "#0ea5e9", whiteSpace: "nowrap" as const }
@@ -74,39 +82,35 @@ export function GenerateControls({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <div>
+    <div className="flex flex-col gap-3">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3">
         <div className="flex items-center gap-1.5 text-slate-400">
           <ClockIcon />
           <span className="text-xs font-semibold uppercase tracking-wide">Duration</span>
         </div>
-        <div className="mt-2 space-y-1">
-          <input
-            type="range"
-            min={15}
-            max={60}
-            step={5}
-            value={value.duration_minutes}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                duration_minutes: Number(event.target.value) as PlanRequest["duration_minutes"],
-              })
-            }
-            className="w-full accent-sky-500 disabled:opacity-60"
-          />
-          <p className="text-sm text-slate-300">{value.duration_minutes} min</p>
+        <div className="mt-3 flex gap-1.5">
+          {DURATION_PRESETS.map((minutes) => (
+            <button
+              key={minutes}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange({ ...value, duration_minutes: minutes })}
+              className="flex-1 rounded-md border py-1 text-xs font-medium disabled:opacity-60"
+              style={durationButtonStyle(value.duration_minutes === minutes)}
+            >
+              {minutes}m
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-3 sm:border-t-0 sm:pt-0">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3">
         <div className="flex items-center gap-1.5 text-slate-400">
           <PressureIcon />
           <span className="text-xs font-semibold uppercase tracking-wide">Effort</span>
         </div>
         <div
-          className="mt-2 grid gap-1.5"
+          className="mt-3 grid gap-1.5"
           style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
         >
           {(["easy", "medium", "hard"] as Effort[]).map((effort) => (
@@ -124,12 +128,12 @@ export function GenerateControls({
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-3 sm:border-t-0 sm:pt-0">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3">
         <div className="flex items-center gap-1.5 text-slate-400">
           <LabelIcon />
           <span className="text-xs font-semibold uppercase tracking-wide">Tags</span>
         </div>
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {REQUESTED_TAG_OPTIONS.map((tag) => (
             <button
               key={tag}

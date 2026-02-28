@@ -136,7 +136,7 @@ export default function GeneratePlanPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-950/95 p-5 backdrop-blur shadow">
+      <div className="space-y-5">
         <GenerateControls value={request} disabled={generating || accepting} onChange={setRequest} />
 
         <button
@@ -145,9 +145,9 @@ export default function GeneratePlanPage() {
           disabled={generating || accepting}
           className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
           style={{
-            backgroundColor: plan ? "#f59e0b" : "#0ea5e9",
-            borderColor: plan ? "#f59e0b" : "#0ea5e9",
-            color: "#111827",
+            backgroundColor: plan ? "#8b5cf6" : "#0ea5e9",
+            borderColor: plan ? "#8b5cf6" : "#0ea5e9",
+            color: "#ffffff",
           }}
         >
           {!generating && (
