@@ -254,20 +254,19 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "and balance, switch arms each length); "
             "Kick on Side (lie on your side, lower arm extended, kick and rotate to "
             "breathe — addresses crossover and improves streamlining). "
-            "Each step description must cue the specific drill mechanics, not just effort. "
+            "Each step description must be one brief sentence cueing the drill's key mechanic. "
             "Aim for variety across different movement patterns (kick, pull, catch, rotation)."
         ),
         "speed": (
-            "Target the phosphocreatine and fast-twitch systems. Use 50m repeats at "
-            "near-maximal effort with full recovery (30-60s rest) so quality is maintained "
-            "across all reps. 6-12 reps is typical. Descriptions should cue explosive starts, "
+            "Short, fast repeats at near-maximal effort with full recovery (30-60s rest) so quality is maintained "
+            "across all reps. Use 50m repeats; 6-12 reps is typical. Descriptions should cue explosive starts, "
             "high stroke rate, and a strong finish."
         ),
         "endurance": (
-            "Build aerobic base. Use 150-400m repeats or sustained continuous swimming with "
-            "short rest (10-20s). Effort stays controlled and sub-threshold throughout. "
+            "Longer steady repeats or sustained continuous swimming with short rest (10-20s). "
+            "Effort stays controlled and comfortable throughout. "
             "Descriptions should emphasise rhythm, controlled breathing, and maintaining "
-            "good form under fatigue."
+            "good form."
         ),
         "recovery": (
             "Active recovery session. Keep everything easy and predictable. "
@@ -310,8 +309,8 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "feel for the water."
         ),
         "threshold": (
-            "Target lactate threshold. Use 200-400m repeats at a firm, comfortably hard effort "
-            "with short rest (15-30s). Descriptions should cue holding even splits and "
+            "Firm, comfortably hard effort the swimmer can just sustain. Use 200-400m repeats "
+            "with short rest (15-30s). Descriptions should cue holding an even pace and "
             "staying relaxed under pressure."
         ),
         "sprints": (
@@ -347,19 +346,19 @@ def _effort_hint(effort: str) -> str:
             "Cool-down: very easy choice of stroke. No intensity spikes anywhere."
         ),
         "medium": (
-            "Steady aerobic work at a comfortably challenging pace the swimmer can sustain. "
+            "Steady work at a comfortably challenging pace the swimmer can sustain. "
             "Warm-up: easy continuous build, optionally ending with 4×50m progressive activation. "
-            "Main set: 100-200m repeats with 15-30s rest, or threshold-style longer efforts. "
-            "Cool-down: easy swimming to begin lactate clearance."
+            "Main set: 100-200m repeats with 15-30s rest, or longer sustained efforts. "
+            "Cool-down: easy relaxed swimming."
         ),
         "hard": (
-            "High-intensity training targeting the anaerobic threshold or speed systems. "
+            "High-intensity training. "
             "Warm-up is critical: include an easy build and a brief activation piece "
             "(e.g. 4-6×50m at medium effort) before the main set. "
             "Main set: short-to-medium repeats (50-100m each) with adequate rest (20-45s) to "
             "preserve quality across all reps — quality over volume. "
             "Total session volume should be lower than an equivalent easy or medium session. "
-            "Cool-down: minimum 100m of easy continuous swimming for lactate clearance."
+            "Cool-down: minimum 100m of easy continuous swimming."
         ),
     }
     return hints_map.get(effort, "Use balanced effort progression across sections.")
@@ -414,8 +413,7 @@ def _session_type_override(requested_tags: list[str], effort: str) -> str:
         "Do NOT use plain freestyle interval repeats in the main_set.\n"
         "Do NOT repeat the same drill type in more than one step.\n"
         f"The effort value '{effort}' is expressed as: {effort_expression}\n"
-        "Each step description must name the drill and explain its specific mechanics "
-        "and the coaching cue the swimmer should focus on."
+        "Each step description must be one concise sentence: name the drill and give the single most important coaching cue."
     )
 
 
@@ -505,6 +503,8 @@ def build_user_prompt(
         "- Minimum distance_per_rep_m is 50m. Never use 25m or any non-multiple of 50.\n"
         "- Never use fractional distances. All distance values must be whole integers.\n"
         "- reps must be > 0.\n"
+        "- A step with reps: 1 must use kind: 'continuous', never kind: 'intervals'.\n"
+        "- warm_up and cool_down must each contain at most 2 steps.\n"
         "- distance_per_rep_m must be >= 50.\n"
         "- rest_seconds must be null or >= 0.\n"
         "- Allowed kind values: continuous, intervals.\n"
@@ -516,7 +516,8 @@ def build_user_prompt(
         "- If a SESSION OVERRIDE is present: its rules for main_set structure are mandatory and override style rules below.\n"
         "- If no SESSION OVERRIDE: straightforward style → main_set must contain one clear pattern only.\n"
         "- If no SESSION OVERRIDE: varied style → main_set should contain 2-3 distinct steps with clear variation.\n"
-        "- Step descriptions for drill steps must name the drill and explain its mechanics — longer descriptions are expected and required.\n"
+        "- Step descriptions must be concise: one brief sentence with the single most important coaching cue. Do not write multiple sentences.\n"
+        "- Step descriptions must use plain, everyday language. Never use technical terms — do not use words like 'phosphocreatine', 'lactate', 'aerobic', 'anaerobic', 'threshold', 'ATP', 'fast-twitch', or 'energy systems' in descriptions.\n"
         "- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n"
         "- For hard effort without a SESSION OVERRIDE, increase intensity using interval density or shorter rest, not excessive distance.\n"
         "- For hard sessions, warm_up must include a short activation piece before the main set.\n"
