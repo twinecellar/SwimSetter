@@ -13,6 +13,7 @@ export const REQUESTED_TAG_OPTIONS = [
   "steady",
   "freestyle",
   "mixed",
+  "kick",
 ] as const;
 
 const REQUESTED_TAG_SET = new Set<string>(REQUESTED_TAG_OPTIONS);

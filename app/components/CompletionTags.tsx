@@ -18,15 +18,15 @@ export function CompletionTags({
   onAddCustomTag,
 }: CompletionTagsProps) {
   const fieldStyle = {
-    backgroundColor: "#0b1736",
-    borderColor: "#334155",
-    color: "#f8fafc",
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    color: "#0f172a",
   };
 
   const actionStyle = {
-    backgroundColor: "#162447",
-    borderColor: "#334155",
-    color: "#e2e8f0",
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    color: "#334155",
   };
 
   return (

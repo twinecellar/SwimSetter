@@ -1,6 +1,6 @@
 import type { CompletionRow, GeneratedPlan, PlanRequest } from "@/lib/plan-types";
 import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
-import { groupSegments } from "@/lib/plan-utils";
+import { PlanBreakdown } from "@/app/components/PlanBreakdown";
 
 interface PlanCardProps {
   title: string;
@@ -19,22 +19,25 @@ export function PlanCard({
   completion,
   actions,
 }: PlanCardProps) {
-  const groups = groupSegments(plan.segments);
   const totalDistanceM =
     plan.segments.reduce((sum, segment) => sum + segment.distance_m, 0) || plan.estimated_distance_m;
-  const feedbackSymbol =
-    completion?.rating === 0 ? "👎" : completion?.rating === 1 ? "👍" : "No feedback";
+  const feedbackThumb =
+    completion?.rating === 1
+      ? <img src="/thumb_up.png" alt="thumbs up" width={16} height={16} style={{ display: "inline-block" }} />
+      : completion?.rating === 0
+        ? <img src="/thumb_down.png" alt="thumbs down" width={16} height={16} style={{ display: "inline-block" }} />
+        : null;
 
   const requestTokenStyle = {
-    backgroundColor: "#0b1736",
-    borderColor: "#1e3a5f",
-    color: "#c7d8ee",
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    borderColor: "rgba(14, 165, 233, 0.25)",
+    color: "#0369a1",
   };
 
   const feedbackTokenStyle = {
-    backgroundColor: "#132b1f",
-    borderColor: "#1f5d46",
-    color: "#b6efd2",
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    borderColor: "rgba(16, 185, 129, 0.25)",
+    color: "#047857",
   };
 
   return (
@@ -48,77 +51,52 @@ export function PlanCard({
       </div>
 
       {request && (
-        <div className="space-y-1">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          <span
+            className="rounded-full border px-3 py-1 text-xs font-medium"
+            style={requestTokenStyle}
+          >
+            {request.duration_minutes} min
+          </span>
+          <span
+            className="rounded-full border px-3 py-1 text-xs font-medium capitalize"
+            style={requestTokenStyle}
+          >
+            {request.effort}
+          </span>
+          {(request.requested_tags ?? []).slice(0, 5).map((tag) => (
             <span
+              key={tag}
               className="rounded-full border px-3 py-1 text-xs font-medium"
               style={requestTokenStyle}
             >
-              {request.duration_minutes} min
+              {tag}
             </span>
-            <span
-              className="rounded-full border px-3 py-1 text-xs font-medium capitalize"
-              style={requestTokenStyle}
-            >
-              {request.effort}
-            </span>
-            {(request.requested_tags ?? []).slice(0, 5).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border px-3 py-1 text-xs font-medium"
-                style={requestTokenStyle}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+          ))}
         </div>
       )}
 
-      <div className="space-y-2">
-        {groups.map((group) => (
-          <section
-            key={group.title}
-            className="rounded-md border border-slate-800 bg-slate-900/50 px-3 py-2"
-          >
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
-                {group.title}
-              </p>
-              <p className="text-xs text-slate-400">
-                {group.items.reduce((sum, segment) => sum + segment.distance_m, 0)}m
-              </p>
-            </div>
-            <ol className="space-y-1">
-              {group.items.map((segment) => (
-                <li key={segment.id} className="text-sm text-slate-200">
-                  {segment.description}
-                </li>
-              ))}
-            </ol>
-          </section>
-        ))}
-      </div>
+      <PlanBreakdown segments={plan.segments} />
 
       {completion && (
-        <div className="space-y-1">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          {feedbackThumb && (
             <span
+              className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"
+              style={feedbackTokenStyle}
+            >
+              {feedbackThumb}
+            </span>
+          )}
+          {completion.tags.slice(0, 5).map((tag) => (
+            <span
+              key={tag}
               className="rounded-full border px-3 py-1 text-xs font-medium"
               style={feedbackTokenStyle}
             >
-              {feedbackSymbol}
+              {tag}
             </span>
-            {completion.tags.slice(0, 5).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border px-3 py-1 text-xs font-medium"
-                style={feedbackTokenStyle}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+          ))}
         </div>
       )}
 

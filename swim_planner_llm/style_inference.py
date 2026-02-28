@@ -4,7 +4,7 @@ from typing import Iterable
 
 from .models import HistoricSession, SwimPlanInput
 
-VARIED_REQUEST_TAGS = {"fun", "mixed", "technique", "speed"}
+VARIED_REQUEST_TAGS = {"fun", "mixed", "technique", "speed", "kick"}
 STRAIGHTFORWARD_REQUEST_TAGS = {"recovery", "steady", "freestyle"}
 VARIED_HISTORY_TAGS = {"fun", "mixed", "varied", "technique"}
 

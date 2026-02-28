@@ -2,7 +2,7 @@
 
 import type { HistoricSession } from './types';
 
-const VARIED_REQUEST_TAGS = new Set(['fun', 'mixed', 'technique', 'speed']);
+const VARIED_REQUEST_TAGS = new Set(['fun', 'mixed', 'technique', 'speed', 'kick']);
 const STRAIGHTFORWARD_REQUEST_TAGS = new Set(['recovery', 'steady', 'freestyle']);
 const VARIED_HISTORY_TAGS = new Set(['fun', 'mixed', 'varied', 'technique']);
 

@@ -2,32 +2,39 @@ interface SessionStatusBadgeProps {
   status: "planned" | "in_progress" | "completed";
 }
 
-const STATUS_COPY: Record<
+const STATUS_CONFIG: Record<
   SessionStatusBadgeProps["status"],
-  { label: string; className: string }
+  { label: string; bg: string; color: string; border: string }
 > = {
   planned: {
     label: "Planned",
-    className: "bg-sky-500/10 text-sky-300 border border-sky-500/30",
+    bg: "rgba(14, 165, 233, 0.1)",
+    color: "#0284c7",
+    border: "rgba(14, 165, 233, 0.35)",
   },
   in_progress: {
     label: "In progress",
-    className: "bg-amber-500/10 text-amber-300 border border-amber-500/30",
+    bg: "rgba(245, 158, 11, 0.1)",
+    color: "#b45309",
+    border: "rgba(245, 158, 11, 0.35)",
   },
   completed: {
     label: "Completed",
-    className: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30",
+    bg: "rgba(16, 185, 129, 0.1)",
+    color: "#047857",
+    border: "rgba(16, 185, 129, 0.35)",
   },
 };
 
 export function SessionStatusBadge({ status }: SessionStatusBadgeProps) {
-  const config = STATUS_COPY[status];
+  const { label, bg, color, border } = STATUS_CONFIG[status];
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${config.className}`}
+      className="inline-flex items-center rounded-full px-2\.5 py-1 text-xs font-semibold"
+      style={{ backgroundColor: bg, color, border: `1px solid ${border}` }}
     >
-      {config.label}
+      {label}
     </span>
   );
 }

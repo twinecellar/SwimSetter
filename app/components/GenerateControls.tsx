@@ -30,13 +30,13 @@ export function GenerateControls({
     const stateStyles = selected
       ? {
           backgroundColor: "#0ea5e9",
-          color: "#020617",
+          color: "#ffffff",
           borderColor: "#0ea5e9",
         }
       : {
-          backgroundColor: "#0f172a",
-          color: "#e2e8f0",
-          borderColor: "#1e293b",
+          backgroundColor: "#f8fafc",
+          color: "#334155",
+          borderColor: "#e2e8f0",
         };
 
     return {
@@ -54,13 +54,13 @@ export function GenerateControls({
     const stateStyles = selected
       ? {
           backgroundColor: "#0ea5e9",
-          color: "#020617",
+          color: "#ffffff",
           borderColor: "#0ea5e9",
         }
       : {
-          backgroundColor: "#0f172a",
-          color: "#e2e8f0",
-          borderColor: "#1e293b",
+          backgroundColor: "#f8fafc",
+          color: "#334155",
+          borderColor: "#e2e8f0",
         };
 
     return {

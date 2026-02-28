@@ -299,9 +299,9 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "timing cues."
         ),
         "kick": (
-            "Include a kick-focused step (no arm pull; streamline or kickboard). Place in "
-            "warm_up or as an early main_set step. Descriptions should cue body position, "
-            "kick depth, and ankle flexibility."
+            "Include a dedicated kick step in the main_set (no arm pull; kickboard or streamline). "
+            "Place it as the first main_set step, followed by the primary work. "
+            "Descriptions should cue tight flutter kick from the hips, limited knee bend, and relaxed ankles."
         ),
         "pull": (
             "Include a pull-focused step (pull buoy, no kick) in the main_set to emphasise "

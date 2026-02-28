@@ -76,21 +76,21 @@ export function CompletionForm({ planId }: CompletionFormProps) {
   }
 
   const secondaryButtonStyle = {
-    backgroundColor: "#162447",
-    borderColor: "#334155",
-    color: "#e2e8f0",
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    color: "#334155",
   };
 
   const noteToggleStyle = {
-    backgroundColor: "#0f172a",
-    borderColor: "#334155",
-    color: "#cbd5e1",
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    color: "#334155",
   };
 
   const noteFieldStyle = {
-    backgroundColor: "#0b1736",
-    borderColor: "#334155",
-    color: "#f8fafc",
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    color: "#0f172a",
   };
 
   return (
@@ -104,26 +104,31 @@ export function CompletionForm({ planId }: CompletionFormProps) {
       <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/30 p-4">
         <div className="flex items-center justify-between gap-2">
           <label className="block text-sm font-medium text-slate-200">Feedback</label>
-          <p className="text-sm font-medium text-slate-300">{rating === 1 ? "👍" : "👎"}</p>
+          <img
+            src={rating === 1 ? "/thumb_up.png" : "/thumb_down.png"}
+            alt={rating === 1 ? "thumbs up" : "thumbs down"}
+            width={20}
+            height={20}
+          />
         </div>
         <div className="flex gap-1.5">
           {([
-            { value: 1 as const, label: "Thumbs up", symbol: "👍" },
-            { value: 0 as const, label: "Thumbs down", symbol: "👎" },
+            { value: 1 as const, label: "Thumbs up", img: "/thumb_up.png" },
+            { value: 0 as const, label: "Thumbs down", img: "/thumb_down.png" },
           ]).map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => setRating(option.value)}
               aria-label={option.label}
-              className="flex h-11 w-20 items-center justify-center rounded-md border text-2xl leading-none transition-colors"
+              className="flex h-11 w-20 items-center justify-center rounded-md border transition-colors"
               style={{
-                backgroundColor: "#0b1736",
-                borderColor: "#334155",
-                color: rating === option.value ? "#f8fafc" : "#64748b",
+                backgroundColor: rating === option.value ? "rgba(14,165,233,0.1)" : "#f8fafc",
+                borderColor: rating === option.value ? "#0ea5e9" : "#e2e8f0",
+                opacity: rating === option.value ? 1 : 0.5,
               }}
             >
-              {option.symbol}
+              <img src={option.img} alt={option.label} width={24} height={24} />
             </button>
           ))}
         </div>
