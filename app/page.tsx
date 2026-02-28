@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PlanCard } from "@/app/components/PlanCard";
 import { HistoryList } from "@/app/components/HistoryList";
-import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
 import type { CompletionRow, PlanRow } from "@/lib/plan-types";
 import { completionByPlanId } from "@/lib/plan-utils";
 import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
@@ -65,7 +64,6 @@ export default async function HomePage({
   const currentPlan = typedPlans.find((plan) => plan.status === "accepted") ?? null;
   const latestCompletedPlan = typedPlans.find((plan) => plan.status === "completed") ?? null;
 
-  const justCompleted = searchParams?.just_completed === "1";
   const returnedFromCompletion = searchParams?.return === "completion";
 
   const sessionState = currentPlan
@@ -76,35 +74,6 @@ export default async function HomePage({
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Home</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            {sessionState === "planned_session"
-              ? "You have a current session ready to complete."
-              : sessionState === "completed_session"
-                ? "Latest session complete. Keep momentum with the next one."
-                : "Generate your first session and get in the pool."}
-          </p>
-        </div>
-        <SessionStatusBadge
-          status={
-            sessionState === "planned_session"
-              ? returnedFromCompletion
-                ? "in_progress"
-                : "planned"
-              : sessionState === "completed_session"
-                ? "completed"
-                : "planned"
-          }
-        />
-      </section>
-
-      {justCompleted && (
-        <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-          Session saved. Generate your next session when you are ready.
-        </p>
-      )}
 
       {currentPlan && (
         <PlanCard

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GenerateControls } from "@/app/components/GenerateControls";
 import { PlanCard } from "@/app/components/PlanCard";
@@ -14,7 +14,6 @@ export default function GeneratePlanPage() {
     effort: "medium",
     requested_tags: [],
   });
-  const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null);
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [generatedRequest, setGeneratedRequest] = useState<PlanRequest | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -51,29 +50,18 @@ export default function GeneratePlanPage() {
 
       const mostRecentRequest = json.plans?.[0]?.request;
       if (mostRecentRequest) {
-        const normalizedRequest: PlanRequest = {
+        setRequest({
           duration_minutes: isDurationMinutes(mostRecentRequest.duration_minutes)
             ? mostRecentRequest.duration_minutes
             : 30,
           effort: mostRecentRequest.effort,
           requested_tags: normalizeRequestedTags(mostRecentRequest.requested_tags),
-        };
-        setLastRequest(normalizedRequest);
+        });
       }
     }
 
     void ensureProfileAndPrefill();
   }, [router]);
-
-  const controlsSummary = useMemo(
-    () =>
-      `${request.duration_minutes}m · ${request.effort}${
-        (request.requested_tags ?? []).length > 0
-          ? ` · tags: ${(request.requested_tags ?? []).join(", ")}`
-          : ""
-      }`,
-    [request],
-  );
 
   async function handleGenerate() {
     const hadPlan = !!plan;
@@ -148,72 +136,57 @@ export default function GeneratePlanPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">Generate a swim session</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Adjust preferences quickly, then accept or regenerate without losing context.
-        </p>
-      </div>
-
-      {lastRequest && (
-        <p className="text-xs text-slate-400">
-          Based on last request: {lastRequest.duration_minutes}m, {lastRequest.effort}
-          {(lastRequest.requested_tags ?? []).length > 0
-            ? `, tags: ${(lastRequest.requested_tags ?? []).join(", ")}`
-            : ""}
-        </p>
-      )}
-
-      <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-950/95 p-4 backdrop-blur">
+      <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-950/95 p-5 backdrop-blur shadow">
         <GenerateControls value={request} disabled={generating || accepting} onChange={setRequest} />
 
-        <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating || accepting}
+          className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          style={{
+            backgroundColor: plan ? "#f59e0b" : "#0ea5e9",
+            borderColor: plan ? "#f59e0b" : "#0ea5e9",
+            color: "#111827",
+          }}
+        >
+          {!generating && (
+            <svg width="16" height="16" viewBox="0 0 53 53" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.7 20.9C24.6 17.6 30 12 33.1 5C31.1 2.9 28.5 1.4 25.7 0.5L24.2 0C24.1 0.2 24 0.500012 24 0.700012C21.6 7.50001 16.7 13 10.1 16.1C5.50001 18.3 2.1 22.3 0.5 27.1L0 28.6C0.2 28.7 0.500005 28.8 0.700005 28.8C2.6 29.5 4.5 30.4 6.3 31.5C8.8 27 12.8 23.2 17.7 20.9Z" fill="currentColor"/>
+              <path d="M46.7 21.3C43 26.9 37.9 31.4 31.6 34.4C26.5 36.8 22.6 41.3 20.8 46.7L20.3 48.4C22.2 50.1 24.5 51.4 27 52.2L28.5 52.7C28.6 52.5 28.7 52.2 28.7 52C31.1 45.2 36 39.7 42.6 36.6C47.2 34.4 50.7 30.4 52.2 25.6L52.7 24.1C50.6 23.5 48.6 22.5 46.7 21.3Z" fill="currentColor"/>
+              <path d="M16.3 43.2C18.8 37.2 23.4 32.3 29.3 29.5C34.7 26.9 39.2 22.9 42.3 18C40 15.8 38.1 13.3 36.7 10.3C33 17.1 27.2 22.6 20.1 26C16 27.9 12.7 31.2 10.7 35.2C12.9 37.3 14.7 39.9 16.1 42.8C16.1 42.8 16.2 43 16.3 43.2Z" fill="currentColor"/>
+            </svg>
+          )}
+          {generating ? "Generating..." : plan ? "Regenerate" : "Generate"}
+        </button>
+      </div>
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
+
+      {plan && (
+        <div className="space-y-4">
+          {generatedAt && <p className="text-xs text-emerald-600">{generatedAt}</p>}
+          <PlanCard title="Generated plan" request={generatedRequest ?? request} plan={plan} />
           <button
             type="button"
-            onClick={handleGenerate}
-            disabled={generating || accepting}
-            className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"
+            onClick={handleAccept}
+            disabled={accepting || generating}
+            className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
             style={{
-              backgroundColor: plan ? "#f59e0b" : "#0ea5e9",
-              borderColor: plan ? "#f59e0b" : "#0ea5e9",
+              backgroundColor: "#10b981",
+              borderColor: "#10b981",
               color: "#111827",
             }}
           >
-            {generating ? "Generating..." : plan ? "Regenerate" : "Generate session"}
+            {!accepting && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor"/>
+                <path d="M8 12L11 15L16 9" stroke="currentColor"/>
+              </svg>
+            )}
+            {accepting ? "Saving..." : "Let's do it!"}
           </button>
-
-          {plan && (
-            <button
-              type="button"
-              onClick={handleAccept}
-              disabled={accepting || generating}
-              className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-60"
-              style={{
-                backgroundColor: "#10b981",
-                borderColor: "#10b981",
-                color: "#111827",
-              }}
-            >
-              {accepting ? "Saving..." : "Accept session"}
-            </button>
-          )}
-
         </div>
-
-        <p className="text-xs text-slate-400">Current controls: {controlsSummary}</p>
-
-        {generatedAt && <p className="text-xs text-emerald-300">{generatedAt}</p>}
-        {error && <p className="text-sm text-red-400">{error}</p>}
-      </div>
-
-      {plan ? (
-        <div className="space-y-4">
-          <PlanCard title="Generated plan" request={generatedRequest ?? request} plan={plan} />
-        </div>
-      ) : (
-        <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-300">
-          No plan yet. Choose your preferences and generate a session.
-        </section>
       )}
     </div>
   );

@@ -11,8 +11,7 @@ body {
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Segoe UI", sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   background: #ffffff;
   color: #0f172a;
   line-height: 1.45;
@@ -93,6 +92,11 @@ a {
 .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
 .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
 .pb-4 { padding-bottom: 1rem; }
+
+/* ── Shadows ─────────────────────────────────────────── */
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+.shadow    { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.05); }
+.shadow-md { box-shadow: 0 2px 6px -1px rgba(0,0,0,0.09), 0 2px 4px -2px rgba(0,0,0,0.05); }
 
 /* ── Borders & Radius ────────────────────────────────── */
 .rounded { border-radius: 0.25rem; }
@@ -210,6 +214,8 @@ a {
 
 /* ── Grid ────────────────────────────────────────────── */
 @media (min-width: 640px) {
+  .sm\:border-t-0 { border-top-width: 0; }
+  .sm\:pt-0       { padding-top: 0; }
   .sm\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

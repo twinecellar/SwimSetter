@@ -1,4 +1,5 @@
-import type { CompletionRow, GeneratedPlan, PlanRequest } from "@/lib/plan-types";
+import type { CompletionRow, Effort, GeneratedPlan, PlanRequest } from "@/lib/plan-types";
+import { effortPillStyle } from "@/lib/effort-colors";
 import { SessionStatusBadge } from "@/app/components/SessionStatusBadge";
 import { PlanBreakdown } from "@/app/components/PlanBreakdown";
 
@@ -41,7 +42,7 @@ export function PlanCard({
   };
 
   return (
-    <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+    <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4 shadow">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-slate-100">{title}</p>
@@ -60,7 +61,7 @@ export function PlanCard({
           </span>
           <span
             className="rounded-full border px-3 py-1 text-xs font-medium capitalize"
-            style={requestTokenStyle}
+            style={effortPillStyle(request.effort as Effort)}
           >
             {request.effort}
           </span>

@@ -14,7 +14,6 @@ export default async function PlansPage() {
   if (rateLimited) {
     return (
       <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
-        <h2 className="text-xl font-semibold tracking-tight">Session history</h2>
         <p className="text-sm text-slate-300">
           Too many auth requests right now. Wait about a minute, then refresh.
         </p>
@@ -62,7 +61,6 @@ export default async function PlansPage() {
   if (!typedPlans.length) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight">Session history</h2>
         <p className="text-sm text-slate-400">No accepted or completed sessions yet.</p>
         <Link
           href="/plans/generate"
@@ -77,22 +75,6 @@ export default async function PlansPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-baseline justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Session history</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Review recent sessions and jump back into your current one.
-          </p>
-        </div>
-        <Link
-          href="/plans/generate"
-          prefetch={false}
-          className="text-sm font-medium text-sky-400 hover:text-sky-300"
-        >
-          Generate new
-        </Link>
-      </div>
-
       {currentPlan && (
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Current session</h3>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { CompletionRow, PlanRow } from "@/lib/plan-types";
+import type { CompletionRow, Effort, PlanRow } from "@/lib/plan-types";
+import { effortPillStyle } from "@/lib/effort-colors";
 import { PlanBreakdown } from "@/app/components/PlanBreakdown";
 import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -105,7 +106,10 @@ export default async function PlanDetailPage({
             <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
               {typedPlan.request.duration_minutes} min
             </span>
-            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium capitalize text-slate-300">
+            <span
+              className="rounded-full border px-3 py-1 text-xs font-medium capitalize"
+              style={effortPillStyle(typedPlan.request.effort as Effort)}
+            >
               {typedPlan.request.effort}
             </span>
             {(typedPlan.request.requested_tags ?? []).map((tag) => (

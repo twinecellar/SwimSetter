@@ -1,18 +1,18 @@
-import type { PlanSegment } from "@/lib/plan-types";
+import type { Effort, PlanSegment } from "@/lib/plan-types";
 import { groupSegments } from "@/lib/plan-utils";
+import { EFFORT_SOLID } from "@/lib/effort-colors";
 
-// Inline styles — Tailwind purges dynamic class names built from object lookups
-const EFFORT_COLOR: Record<string, string> = {
-  easy: "#38bdf8",   // sky-400
-  medium: "#34d399", // emerald-400
-  hard: "#f87171",   // red-400
+const GROUP_ACCENT: Record<string, string> = {
+  "Warm up":   "#0ea5e9", // sky-500
+  "Main":      "#f59e0b", // amber-500
+  "Cool down": "#94a3b8", // slate-400
 };
 
-const EFFORT_LEGEND = [
-  { label: "Easy", color: "#38bdf8" },
-  { label: "Medium", color: "#34d399" },
-  { label: "Hard", color: "#f87171" },
-] as const;
+const EFFORT_LEGEND: { label: string; effort: Effort }[] = [
+  { label: "Easy",   effort: "easy"   },
+  { label: "Medium", effort: "medium" },
+  { label: "Hard",   effort: "hard"   },
+];
 
 function formatRest(seconds: number | undefined): string | null {
   if (!seconds || seconds <= 0) return null;
@@ -23,7 +23,7 @@ function formatRest(seconds: number | undefined): string | null {
 }
 
 function SegmentRow({ segment }: { segment: PlanSegment }) {
-  const color = EFFORT_COLOR[segment.effort] ?? "#64748b";
+  const color = EFFORT_SOLID[segment.effort as Effort] ?? "#64748b";
   const rest = formatRest(segment.rest_seconds);
 
   return (
@@ -54,6 +54,7 @@ export function PlanBreakdown({ segments }: PlanBreakdownProps) {
         <section
           key={group.title}
           className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-3"
+          style={{ borderLeftColor: GROUP_ACCENT[group.title] ?? "#e2e8f0", borderLeftWidth: "3px" }}
         >
           <div className="mb-2 flex items-center justify-between">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-300">
@@ -72,11 +73,11 @@ export function PlanBreakdown({ segments }: PlanBreakdownProps) {
       ))}
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-1">
-        {EFFORT_LEGEND.map(({ label, color }) => (
+        {EFFORT_LEGEND.map(({ label, effort }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span
               className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: color }}
+              style={{ backgroundColor: EFFORT_SOLID[effort] }}
             />
             <span className="text-xs text-slate-500">{label}</span>
           </div>

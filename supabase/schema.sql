@@ -121,6 +121,47 @@ create policy "plan_completions_delete_own" on public.plan_completions
 for delete
 using (auth.uid() = user_id);
 
+-- Invite tokens (used for invite-link gated sign-up)
+-- Invite tokens (invite-link gated sign-up)
+-- No RLS needed — only touched via the consume_invite_token() RPC below
+create table if not exists public.invite_tokens (
+  id         uuid primary key default gen_random_uuid(),
+  token      text not null unique default encode(gen_random_bytes(16), 'hex'),
+  created_at timestamptz not null default now(),
+  used_at    timestamptz
+);
+
+-- Atomically validates and consumes an invite token.
+-- SECURITY DEFINER runs as the table owner, so no RLS or service role needed.
+-- Returns true if the token was valid and is now consumed, false otherwise.
+create or replace function public.consume_invite_token(p_token text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  select id into v_id
+  from public.invite_tokens
+  where token = p_token and used_at is null
+  for update skip locked;
+
+  if not found then
+    return false;
+  end if;
+
+  update public.invite_tokens
+  set used_at = now()
+  where id = v_id;
+
+  return true;
+end;
+$$;
+
+grant execute on function public.consume_invite_token(text) to anon, authenticated;
+
 -- Indices
 create index if not exists idx_profiles_id on public.profiles(id);
 

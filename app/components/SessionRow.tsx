@@ -23,22 +23,53 @@ export function SessionRow({ plan, completion }: SessionRowProps) {
       : completion?.rating === 0
         ? <img src="/thumb_down.png" alt="thumbs down" width={16} height={16} />
         : null;
-  const firstTag = completion?.tags?.[0];
+
+  const requestedTags = plan.request.requested_tags ?? [];
+  const completionTags = completion?.tags ?? [];
+  const hasTags = requestedTags.length > 0 || completionTags.length > 0;
 
   return (
     <Link
       href={`/plans/${plan.id}`}
       prefetch={false}
-      className="flex items-center justify-between py-3 -mx-1 px-1 rounded hover:bg-slate-800/40 transition-colors group"
+      className="flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800/50 border border-slate-700/60 hover:bg-slate-800/80 hover:border-slate-600/60 transition-colors group shadow-sm"
     >
-      <div>
-        <p className="text-sm font-medium text-slate-100">{date}</p>
-        <p className="text-xs text-slate-400 mt-0.5">{distance.toLocaleString()}m</p>
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="flex-shrink-0">
+          <p className="text-sm font-medium text-slate-100">{date}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{distance.toLocaleString()}m</p>
+        </div>
+        {hasTags && (
+          <div className="flex flex-col gap-1">
+            {requestedTags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {requestedTags.map((tag) => (
+                  <span
+                    key={`req-${tag}`}
+                    className="text-sm px-2.5 py-1 rounded bg-slate-700 text-slate-300 border border-slate-600/50"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            {(completionTags.length > 0 || ratingImg) && (
+              <div className="flex items-center flex-wrap gap-1">
+                {ratingImg}
+                {completionTags.map((tag) => (
+                  <span
+                    key={`comp-${tag}`}
+                    className="text-sm px-2.5 py-1 rounded bg-sky-900/50 text-sky-300 border border-sky-700/50"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      <div className="flex items-center gap-2">
-        {ratingImg}
-        {firstTag && <span className="text-xs text-slate-400">{firstTag}</span>}
-        {!ratingImg && !firstTag && <span className="text-xs text-slate-600">—</span>}
+      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
         <svg
           className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0"
           fill="none"
