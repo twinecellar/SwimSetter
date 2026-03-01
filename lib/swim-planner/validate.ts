@@ -21,7 +21,16 @@ export class ValidationIssue extends Error {
   }
 }
 
-const ALLOWED_KINDS = new Set<string>(['continuous', 'intervals']);
+const ALLOWED_KINDS = new Set<string>([
+  'continuous',
+  'intervals',
+  'pyramid',
+  'descending',
+  'ascending',
+  'build',
+  'negative_split',
+]);
+const PYRAMID_KINDS = new Set<string>(['pyramid', 'descending', 'ascending']);
 const ALLOWED_STROKES = new Set<string>([
   'freestyle',
   'backstroke',
@@ -43,7 +52,7 @@ function convertSteps(rawSteps: unknown[] | null | undefined, prefix: string, de
     const stepId = (s?.step_id ?? '').toString().trim() || `${prefix}-${idx + 1}`;
     const description = (s?.description ?? '').toString().trim() || defaultDesc;
 
-    return {
+    const step: Step = {
       step_id: stepId,
       kind: s?.kind as StepKind,
       reps: s?.reps,
@@ -53,6 +62,16 @@ function convertSteps(rawSteps: unknown[] | null | undefined, prefix: string, de
       effort: s?.effort as Effort,
       description,
     };
+    if (Array.isArray(s?.pyramid_sequence_m)) {
+      step.pyramid_sequence_m = s.pyramid_sequence_m;
+    }
+    if (typeof s?.hypoxic === 'boolean') {
+      step.hypoxic = s.hypoxic;
+    }
+    if (typeof s?.split_instruction === 'string' && s.split_instruction.trim()) {
+      step.split_instruction = s.split_instruction.trim();
+    }
+    return step;
   });
 }
 
@@ -108,14 +127,37 @@ function validateStep(step: Step, sectionName: string): void {
   if (!(step.reps > 0)) {
     throw new ValidationIssue(`${sectionName}.${step.step_id}: reps must be > 0`);
   }
-  if (!(step.distance_per_rep_m > 0)) {
-    throw new ValidationIssue(`${sectionName}.${step.step_id}: distance_per_rep_m must be > 0`);
+
+  if (PYRAMID_KINDS.has(step.kind)) {
+    const seq = step.pyramid_sequence_m;
+    if (!seq || seq.length === 0) {
+      throw new ValidationIssue(
+        `${sectionName}.${step.step_id}: pyramid_sequence_m is required for kind '${step.kind}'`,
+      );
+    }
+    if (step.reps !== seq.length) {
+      throw new ValidationIssue(
+        `${sectionName}.${step.step_id}: reps must equal pyramid_sequence_m.length`,
+      );
+    }
+    for (const d of seq) {
+      if (d < 50 || d % 50 !== 0) {
+        throw new ValidationIssue(
+          `${sectionName}.${step.step_id}: every pyramid_sequence_m value must be a multiple of 50 and >= 50`,
+        );
+      }
+    }
+  } else {
+    if (!(step.distance_per_rep_m > 0)) {
+      throw new ValidationIssue(`${sectionName}.${step.step_id}: distance_per_rep_m must be > 0`);
+    }
+    if (step.distance_per_rep_m % 50 !== 0) {
+      throw new ValidationIssue(
+        `${sectionName}.${step.step_id}: distance_per_rep_m must be divisible by 50`,
+      );
+    }
   }
-  if (step.distance_per_rep_m % 50 !== 0) {
-    throw new ValidationIssue(
-      `${sectionName}.${step.step_id}: distance_per_rep_m must be divisible by 50`,
-    );
-  }
+
   const dist = stepDistanceM(step);
   if (dist <= 0) {
     throw new ValidationIssue(
@@ -130,6 +172,16 @@ function validateStep(step: Step, sectionName: string): void {
   if (step.rest_seconds !== null && step.rest_seconds !== undefined && step.rest_seconds < 0) {
     throw new ValidationIssue(
       `${sectionName}.${step.step_id}: rest_seconds must be >= 0 or null`,
+    );
+  }
+  if (step.hypoxic === true && sectionName !== 'main_set') {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: hypoxic: true is only permitted on main_set steps`,
+    );
+  }
+  if (step.hypoxic === true && (step.rest_seconds === null || step.rest_seconds < 20)) {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: hypoxic steps must have rest_seconds >= 20`,
     );
   }
   if (!step.step_id.trim()) {

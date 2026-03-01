@@ -12,7 +12,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'SwimSetter',
+  title: 'goby',
   description: 'Simple swim plans on the fly'
 };
 
@@ -27,8 +27,8 @@ export default function RootLayout({
         <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-6">
           <header className="mb-6 border-b border-slate-200 pb-4">
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <Image src="/logo1.svg" alt="SwimSetter logo" width={28} height={28} />
-              SwimSetter
+              <Image src="/goby_fish_v1.png" alt="SwimSetter logo" width={80} height={42} />
+              goby
             </h1>
             <HeaderSubtitle />
             <TopNav />

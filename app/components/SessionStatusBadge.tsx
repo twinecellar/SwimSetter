@@ -8,9 +8,9 @@ const STATUS_CONFIG: Record<
 > = {
   planned: {
     label: "Planned",
-    bg: "rgba(14, 165, 233, 0.1)",
-    color: "#0284c7",
-    border: "rgba(14, 165, 233, 0.35)",
+    bg: "rgba(0, 200, 216, 0.1)",
+    color: "#006D7A",
+    border: "rgba(0, 200, 216, 0.35)",
   },
   in_progress: {
     label: "In progress",

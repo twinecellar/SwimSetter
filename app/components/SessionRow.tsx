@@ -59,7 +59,8 @@ export function SessionRow({ plan, completion }: SessionRowProps) {
                 {completionTags.map((tag) => (
                   <span
                     key={`comp-${tag}`}
-                    className="text-sm px-2.5 py-1 rounded bg-sky-900/50 text-sky-300 border border-sky-700/50"
+                    className="text-sm px-2.5 py-1 rounded"
+                    style={{ backgroundColor: "rgba(0, 200, 216, 0.1)", color: "#006D7A", border: "1px solid rgba(0, 200, 216, 0.3)" }}
                   >
                     {tag}
                   </span>

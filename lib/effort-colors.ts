@@ -2,24 +2,24 @@ import type { Effort } from "@/lib/plan-types";
 
 /** Solid fill colour — for segment dots, selected button backgrounds, etc. */
 export const EFFORT_SOLID: Record<Effort, string> = {
-  easy:   "#10b981", // emerald-500
-  medium: "#f59e0b", // amber-500
-  hard:   "#ef4444", // red-500
+  easy:   "#34d399", // emerald-400 (softer)
+  medium: "#fb923c", // orange-400 (shifted from amber to avoid clashing with yellow)
+  hard:   "#f87171", // red-400 (softer)
 };
 
 /** Foreground text on a solid background */
 export const EFFORT_SOLID_TEXT: Record<Effort, string> = {
-  easy:   "#ffffff",
-  medium: "#1c1917", // dark for legibility on amber
-  hard:   "#ffffff",
+  easy:   "#065f46", // dark for legibility on light green
+  medium: "#7c2d12", // dark for legibility on orange
+  hard:   "#7f1d1d", // dark for legibility on light red
 };
 
 /** Pill / badge style — tinted background + matching border + dark text */
 export function effortPillStyle(effort: Effort): React.CSSProperties {
   const palette: Record<Effort, { bg: string; border: string; color: string }> = {
-    easy:   { bg: "rgba(16, 185, 129, 0.10)", border: "rgba(16, 185, 129, 0.30)", color: "#047857" },
-    medium: { bg: "rgba(245, 158, 11,  0.10)", border: "rgba(245, 158, 11,  0.30)", color: "#92400e" },
-    hard:   { bg: "rgba(239, 68,  68,  0.10)", border: "rgba(239, 68,  68,  0.30)", color: "#991b1b" },
+    easy:   { bg: "rgba(52,  211, 153, 0.10)", border: "rgba(52,  211, 153, 0.30)", color: "#065f46" },
+    medium: { bg: "rgba(251, 146, 60,  0.10)", border: "rgba(251, 146, 60,  0.30)", color: "#9a3412" },
+    hard:   { bg: "rgba(248, 113, 113, 0.10)", border: "rgba(248, 113, 113, 0.30)", color: "#991b1b" },
   };
   const { bg, border, color } = palette[effort];
   return { backgroundColor: bg, borderColor: border, color };
@@ -36,9 +36,9 @@ export function effortButtonStyle(effort: Effort, selected: boolean): React.CSSP
   }
   // Unselected: outlined ghost — transparent bg, solid border, coloured text
   const outline: Record<Effort, { border: string; color: string }> = {
-    easy:   { border: "#10b981", color: "#047857" },
-    medium: { border: "#f59e0b", color: "#92400e" },
-    hard:   { border: "#ef4444", color: "#991b1b" },
+    easy:   { border: "#34d399", color: "#047857" },
+    medium: { border: "#fb923c", color: "#c2410c" },
+    hard:   { border: "#f87171", color: "#b91c1c" },
   };
   const { border, color } = outline[effort];
   return { backgroundColor: "transparent", borderColor: border, color };

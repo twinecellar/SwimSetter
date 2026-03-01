@@ -93,9 +93,9 @@ export function CompletionForm({ planId, children }: CompletionFormProps) {
               onClick={() => setRating(option.value)}
               className="flex flex-1 items-center justify-center gap-2 rounded-md border py-3 text-sm font-medium transition-colors"
               style={{
-                backgroundColor: rating === option.value ? "rgba(14,165,233,0.12)" : "transparent",
-                borderColor: rating === option.value ? "#0ea5e9" : "#334155",
-                color: rating === option.value ? "#38bdf8" : "#94a3b8",
+                backgroundColor: rating === option.value ? "rgba(0,200,216,0.12)" : "transparent",
+                borderColor: rating === option.value ? "#00C8D8" : "#334155",
+                color: rating === option.value ? "#006D7A" : "#94a3b8",
               }}
             >
               <img src={option.img} alt="" width={20} height={20} />

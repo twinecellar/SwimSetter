@@ -145,9 +145,9 @@ export default function GeneratePlanPage() {
           disabled={generating || accepting}
           className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
           style={{
-            backgroundColor: plan ? "#8b5cf6" : "#0ea5e9",
-            borderColor: plan ? "#8b5cf6" : "#0ea5e9",
-            color: "#ffffff",
+            backgroundColor: plan ? "#003366" : "#FFD700",
+            borderColor: plan ? "#003366" : "#FFD700",
+            color: plan ? "#ffffff" : "#003366",
           }}
         >
           {!generating && (
@@ -173,9 +173,9 @@ export default function GeneratePlanPage() {
             disabled={accepting || generating}
             className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
             style={{
-              backgroundColor: "#10b981",
-              borderColor: "#10b981",
-              color: "#111827",
+              backgroundColor: "#FFD700",
+              borderColor: "#FFD700",
+              color: "#003366",
             }}
           >
             {!accepting && (

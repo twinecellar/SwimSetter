@@ -71,13 +71,13 @@ export function GenerateControls({
 
   function durationButtonStyle(selected: boolean): React.CSSProperties {
     return selected
-      ? { backgroundColor: "#0ea5e9", borderColor: "#0ea5e9", color: "#111827" }
+      ? { backgroundColor: "#00C8D8", borderColor: "#00C8D8", color: "#003366" }
       : { backgroundColor: "transparent", borderColor: "#475569", color: "#94a3b8" };
   }
 
   function getChipStyles(selected: boolean) {
     return selected
-      ? { backgroundColor: "#0ea5e9", color: "#ffffff", borderColor: "#0ea5e9", whiteSpace: "nowrap" as const }
+      ? { backgroundColor: "#00C8D8", color: "#003366", borderColor: "#00C8D8", whiteSpace: "nowrap" as const }
       : { backgroundColor: "#f8fafc", color: "#334155", borderColor: "#e2e8f0", whiteSpace: "nowrap" as const };
   }
 

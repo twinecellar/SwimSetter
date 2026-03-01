@@ -3,8 +3,8 @@ import { groupSegments } from "@/lib/plan-utils";
 import { EFFORT_SOLID } from "@/lib/effort-colors";
 
 const GROUP_ACCENT: Record<string, string> = {
-  "Warm up":   "#0ea5e9", // sky-500
-  "Main":      "#f59e0b", // amber-500
+  "Warm up":   "#00C8D8", // cyan
+  "Main":      "#FFD700", // yellow
   "Cool down": "#94a3b8", // slate-400
 };
 

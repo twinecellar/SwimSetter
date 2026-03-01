@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 
 const SUBTITLES: Record<string, string> = {
-  "/":               "Your swim cycle at a glance.",
+  "/":               "Swimming isn't boring.",
   "/plans/generate": "Set your preferences and generate a session.",
   "/plans":          "Review your past sessions.",
 };

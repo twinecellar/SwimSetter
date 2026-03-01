@@ -1,7 +1,14 @@
 // ── Shared enums ─────────────────────────────────────────────────────────────
 
 export type Effort = 'easy' | 'medium' | 'hard';
-export type StepKind = 'continuous' | 'intervals';
+export type StepKind =
+  | 'continuous'
+  | 'intervals'
+  | 'pyramid'
+  | 'descending'
+  | 'ascending'
+  | 'build'
+  | 'negative_split';
 export type Stroke =
   | 'freestyle'
   | 'backstroke'
@@ -41,10 +48,13 @@ export interface StepDraft {
   kind?: string | null;
   reps?: number | null;
   distance_per_rep_m?: number | null;
+  pyramid_sequence_m?: number[] | null;
   stroke?: string | null;
   rest_seconds?: number | null;
   effort?: string | null;
   description?: string | null;
+  hypoxic?: boolean | null;
+  split_instruction?: string | null;
 }
 
 export interface SectionDraft {
@@ -72,13 +82,21 @@ export interface Step {
   kind: StepKind;
   reps: number;
   distance_per_rep_m: number;
+  pyramid_sequence_m?: number[];
   stroke: Stroke;
   rest_seconds: number | null;
   effort: Effort;
   description: string;
+  hypoxic?: boolean;
+  split_instruction?: string;
 }
 
+const PYRAMID_KINDS = new Set<StepKind>(['pyramid', 'descending', 'ascending']);
+
 export function stepDistanceM(step: Step): number {
+  if (PYRAMID_KINDS.has(step.kind) && step.pyramid_sequence_m && step.pyramid_sequence_m.length > 0) {
+    return step.pyramid_sequence_m.reduce((sum, d) => sum + d, 0);
+  }
   return step.reps * step.distance_per_rep_m;
 }
 

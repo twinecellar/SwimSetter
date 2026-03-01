@@ -30,9 +30,9 @@ export function PlanCard({
         : null;
 
   const requestTokenStyle = {
-    backgroundColor: "rgba(14, 165, 233, 0.08)",
-    borderColor: "rgba(14, 165, 233, 0.25)",
-    color: "#0369a1",
+    backgroundColor: "rgba(0, 200, 216, 0.08)",
+    borderColor: "rgba(0, 200, 216, 0.25)",
+    color: "#006D7A",
   };
 
   const feedbackTokenStyle = {

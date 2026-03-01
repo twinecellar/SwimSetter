@@ -7,21 +7,28 @@ import { inferPreferVaried } from './style-inference';
 // ── System prompt ─────────────────────────────────────────────────────────────
 
 export const SYSTEM_PROMPT =
-  'You are an expert swimming coach with deep knowledge of energy systems, periodization, ' +
-  'and effective swim session design. Your plans follow sound coaching principles: ' +
+  'You are an expert and fun swimming coach with deep knowledge of energy systems, periodization, ' +
+  'and effective swim session design. You know how to make people enjoy swimming. ' +
+  'People enjoy your sessions and want to do more of them. ' +
+  'Your plans follow sound coaching principles: ' +
   'progressive warm-ups that prime the body for work, main sets matched to the target energy ' +
   'system, and genuine cool-downs that aid recovery and lactate clearance. ' +
   'You must return valid JSON matching the provided schema exactly. ' +
-  'Do not include markdown, comments, explanations, or extra keys.';
+  'Do not include markdown, comments, explanations, or extra keys. ' +
+  'Sessions should feel engaging and varied — use pyramids, builds, descending sets, and mixed formats where appropriate to keep the swimmer interested and motivated.';
 
 // ── Schema example (mirrors _schema_excerpt() in Python) ─────────────────────
 
 export function schemaExcerpt(): string {
+  // TODO: validator — update validate.ts to accept new step kinds: pyramid, descending,
+  // ascending, build, negative_split. Validate pyramid_sequence_m (present when required,
+  // all values multiples of 50, sum == step distance contribution, reps == length).
+  // Also accept optional hypoxic and split_instruction fields on steps.
   const example = {
     plan_id: 'uuid',
     created_at: 'ISO-8601 datetime',
     duration_minutes: 20,
-    estimated_distance_m: 700,
+    estimated_distance_m: 1150,
     sections: {
       warm_up: {
         title: 'Warm-up',
@@ -41,7 +48,7 @@ export function schemaExcerpt(): string {
       },
       main_set: {
         title: 'Main Set',
-        section_distance_m: 400,
+        section_distance_m: 850,
         steps: [
           {
             step_id: 'main-1',
@@ -52,6 +59,18 @@ export function schemaExcerpt(): string {
             rest_seconds: 20,
             effort: 'hard',
             description: 'Hold a strong, controlled pace across all repeats.',
+          },
+          {
+            step_id: 'main-2',
+            kind: 'pyramid',
+            reps: 5,
+            distance_per_rep_m: 50,
+            pyramid_sequence_m: [50, 100, 150, 100, 50],
+            stroke: 'freestyle',
+            rest_seconds: 20,
+            effort: 'medium',
+            description: 'Build up and back down — settle into your rhythm on the way up and hold it on the way down.',
+            hypoxic: false,
           },
         ],
       },
@@ -232,25 +251,31 @@ const TAG_HINT_MAP: Record<string, string> = {
   speed:
     'Short, fast repeats at near-maximal effort with full recovery (30-60s rest) so quality is maintained ' +
     'across all reps. Use 50m repeats; 6-12 reps is typical. Descriptions should cue explosive starts, ' +
-    'high stroke rate, and a strong finish.',
+    'high stroke rate, and a strong finish. ' +
+    'Consider using a descending sequence (e.g. 100, 50) to build into peak speed across the set.',
   endurance:
     'Longer steady repeats or sustained continuous swimming with short rest (10-20s). ' +
     'Effort stays controlled and comfortable throughout. ' +
     'Descriptions should emphasise rhythm, controlled breathing, and maintaining ' +
-    'good form.',
+    'good form. ' +
+    'A pyramid (e.g. 100, 150, 200, 150, 100) is an effective endurance structure — consider it for variety.',
   recovery:
     'Active recovery session. Keep everything easy and predictable. ' +
     'Prefer continuous swimming over intervals. Use generous rest between any effort ' +
     'changes (45-60s). Target the low end of the distance range. No intensity spikes.',
   fun:
-    'Create an engaging, varied session. Mix distances, formats, strokes, or drill ' +
-    'types across steps to keep interest high — e.g. a kick set followed by fist ' +
-    'drill followed by a build swim. Descriptions should be encouraging and ' +
-    'specific about what the swimmer is doing and why.',
+    'Create a genuinely varied and playful session. The main set MUST use at least two different ' +
+    'step kinds (e.g. a pyramid followed by a build, or a descending set followed by intervals). ' +
+    'Mix strokes, formats, or distances across steps. Include at least one step that is structurally ' +
+    'different from a standard interval set — e.g. a pyramid, a negative split, or a build. ' +
+    'Descriptions should be warm, encouraging, and specific. Avoid clinical language.' +
+    'Make this session feel like play, not training. Use at least one pyramid or descending set. ' +
+    'Mix strokes if possible. Include one step with an unusual format — a build, a negative split, ' +
+    'or a hypoxic set. Keep descriptions light and fun. Avoid anything that sounds like a race or a test.',
   steady:
     'Aerobic threshold pace. All reps at the same controlled, repeatable effort with ' +
-    'consistent rest. Avoid pyramids, descending rest, or mixed pacing. Descriptions ' +
-    'should emphasise holding a steady tempo.',
+    'consistent rest. Avoid mixed pacing. Descriptions should emphasise holding a steady tempo. ' +
+    'Note: ascending sets with consistent rest are compatible with steady effort if pace is even throughout.',
   short: 'Efficient structure. Minimise transition steps. Prioritise quality over quantity.',
   hard:
     'High intensity. Use short rest (10-20s) between intervals or reduce rep distance ' +
@@ -280,6 +305,11 @@ const TAG_HINT_MAP: Record<string, string> = {
     'Maximum effort short repeats (50m). Full recovery between each (45-90s). ' +
     'Focus on explosive power and peak speed. 6-10 reps is typical. Describe ' +
     'drive off the wall and maintaining stroke rate to the flags.',
+  hypoxic:
+    'Include 1-2 hypoxic steps in the main set. Mark these with hypoxic: true. ' +
+    'Reduce breathing frequency (every 5, 7, or 9 strokes) or hold breath for a full length. ' +
+    'Use short distances (50m per rep) and generous rest (30-45s). ' +
+    'Descriptions must clearly state the breathing pattern. Never use hypoxic on warm-up or cool-down steps.',
 };
 
 function requestedTagHints(requestedTags: string[]): string {
@@ -365,8 +395,9 @@ function sectionProportionGuidance(effort: string, durationMinutes: number): str
 function styleHint(preferVaried: boolean): string {
   if (preferVaried) {
     return (
-      'Inferred preferred style is varied. Build a main set with 2-3 distinct steps ' +
-      'while preserving schema consistency.'
+      'Inferred preferred style is varied. Build a main set with 2-3 distinct steps using different formats — ' +
+      'consider pyramids, descending sets, builds, or negative splits alongside standard intervals. ' +
+      'Preserve schema consistency.'
     );
   }
   return 'Inferred preferred style is straightforward. Keep the main set to one clear pattern.';
@@ -481,7 +512,16 @@ export function buildUserPrompt(payload: SwimPlanInput, historySummary: string):
     '- warm_up and cool_down must each contain at most 2 steps.\n' +
     '- distance_per_rep_m must be >= 50.\n' +
     '- rest_seconds must be null or >= 0.\n' +
-    '- Allowed kind values: continuous, intervals.\n' +
+    '- Allowed kind values: continuous, intervals, pyramid, descending, ascending, build, negative_split.\n' +
+    '- When kind is pyramid, descending, or ascending: pyramid_sequence_m must be present as an array of distances.\n' +
+    '- Every value in pyramid_sequence_m must be a multiple of 50 and >= 50.\n' +
+    '- reps must equal pyramid_sequence_m.length for pyramid/descending/ascending steps.\n' +
+    '- The sum of pyramid_sequence_m equals the step\'s distance contribution to section_distance_m.\n' +
+    '- Set distance_per_rep_m to 50 as a placeholder for pyramid/descending/ascending steps.\n' +
+    '- When kind is build: single rep that increases effort within the rep; use reps: 1.\n' +
+    '- When kind is negative_split: include a split_instruction string field on the step.\n' +
+    '- hypoxic: true is only permitted on main_set steps.\n' +
+    '- hypoxic: true steps must have rest_seconds >= 20.\n' +
     '- Allowed stroke values: freestyle, backstroke, breaststroke, butterfly, mixed, choice.\n' +
     '- Allowed effort values: easy, medium, hard.\n' +
     '- All warm_up steps must use effort: easy.\n' +
@@ -492,6 +532,9 @@ export function buildUserPrompt(payload: SwimPlanInput, historySummary: string):
     '- If no SESSION OVERRIDE: varied style → main_set should contain 2-3 distinct steps with clear variation.\n' +
     '- Step descriptions must be concise: one brief sentence with the single most important coaching cue. Do not write multiple sentences.\n' +
     '- Step descriptions must use plain, everyday language. Never use technical terms — do not use words like \'phosphocreatine\', \'lactate\', \'aerobic\', \'anaerobic\', \'threshold\', \'ATP\', \'fast-twitch\', or \'energy systems\' in descriptions.\n' +
+    '- Step descriptions must NOT mention specific distances or metres. Cue effort, technique, or sensation — never say "start at 100m" or "drop to 50m" in a description.\n' +
+    '- Step descriptions must match the step\'s kind. Do not write a descending or pyramid description for an intervals or continuous step, and vice versa.\n' +
+    '- Do not use physical analogies that do not apply to swimming (e.g. gravity, wind). Keep descriptions grounded in the swimmer\'s body and the water.\n' +
     '- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n' +
     '- For hard effort without a SESSION OVERRIDE, increase intensity using interval density or shorter rest, not excessive distance.\n' +
     '- For hard sessions, warm_up must include a short activation piece before the main set.\n' +

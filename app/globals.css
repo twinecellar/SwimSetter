@@ -110,7 +110,7 @@ a {
 .border-slate-300 { border-color: #cbd5e1; }
 .border-slate-700 { border-color: #e2e8f0; }
 .border-slate-800 { border-color: #e2e8f0; }
-.border-sky-500 { border-color: #0ea5e9; }
+.border-sky-500 { border-color: #00C8D8; }
 .border-emerald-500\/30 { border-color: rgba(16, 185, 129, 0.3); }
 
 /* Divide utilities */
@@ -132,8 +132,9 @@ a {
 .bg-slate-900\/60 { background: #f8fafc; }
 .bg-slate-800 { background: #f1f5f9; }
 .bg-slate-800\/60 { background: #f1f5f9; }
-.bg-sky-500 { background: #0ea5e9; }
-.bg-sky-500\/10 { background: rgba(14, 165, 233, 0.1); }
+.bg-sky-500 { background: #FFD700; }
+.bg-sky-500\/10 { background: rgba(0, 200, 216, 0.1); }
+.bg-sky-500\/20 { background: rgba(0, 200, 216, 0.2); }
 .bg-emerald-500 { background: #10b981; }
 .bg-emerald-500\/10 { background: rgba(16, 185, 129, 0.1); }
 
@@ -171,8 +172,8 @@ a {
 /* slate-950: text on coloured buttons — stays very dark */
 .text-slate-950 { color: #0f172a; }
 /* Accent colours — darker for readability on white */
-.text-sky-300   { color: #0284c7; }
-.text-sky-400   { color: #0369a1; }
+.text-sky-300   { color: #009BAA; }
+.text-sky-400   { color: #007A87; }
 .text-emerald-300 { color: #047857; }
 .text-red-400   { color: #dc2626; }
 
@@ -198,15 +199,15 @@ a {
 .hover\:bg-slate-800:hover         { background: #e2e8f0; }
 .hover\:bg-slate-800\/30:hover     { background: rgba(226, 232, 240, 0.4); }
 .hover\:bg-slate-800\/40:hover     { background: rgba(226, 232, 240, 0.5); }
-.hover\:bg-sky-400:hover           { background: #38bdf8; }
-.hover\:bg-sky-500\/10:hover       { background: rgba(14, 165, 233, 0.1); }
+.hover\:bg-sky-400:hover           { background: #FFE033; }
+.hover\:bg-sky-500\/10:hover       { background: rgba(0, 200, 216, 0.1); }
 .hover\:bg-emerald-400:hover       { background: #34d399; }
 .hover\:border-slate-500:hover     { border-color: #94a3b8; }
-.hover\:border-sky-500:hover       { border-color: #0ea5e9; }
-.hover\:text-sky-300:hover         { color: #0284c7; }
+.hover\:border-sky-500:hover       { border-color: #00C8D8; }
+.hover\:text-sky-300:hover         { color: #009BAA; }
 .hover\:text-slate-200:hover       { color: #0f172a; }
 .hover\:text-slate-400:hover       { color: #64748b; }
-.focus\:border-sky-500:focus       { border-color: #0ea5e9; }
+.focus\:border-sky-500:focus       { border-color: #00C8D8; }
 .disabled\:opacity-60:disabled     { opacity: 0.6; }
 
 /* group-hover: chevron tint in SessionRow */

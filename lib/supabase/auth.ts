@@ -14,6 +14,19 @@ export function isAuthRateLimitError(error: unknown): boolean {
   );
 }
 
+function isStaleTokenError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as { code?: string; message?: string };
+  return (
+    candidate.code === "refresh_token_not_found" ||
+    candidate.code === "refresh_token_already_used" ||
+    candidate.code === "bad_jwt"
+  );
+}
+
 export async function getUserWithRateLimitHandling(
   supabase: any,
 ): Promise<GetUserResult> {
@@ -31,6 +44,10 @@ export async function getUserWithRateLimitHandling(
   } catch (error) {
     if (isAuthRateLimitError(error)) {
       return { user: null, rateLimited: true };
+    }
+
+    if (isStaleTokenError(error)) {
+      return { user: null, rateLimited: false };
     }
 
     throw error;
