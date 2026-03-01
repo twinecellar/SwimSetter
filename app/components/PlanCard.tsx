@@ -39,71 +39,85 @@ export function PlanCard({ title, request, plan, status, completion, actions }: 
     <section style={{
       background: 'white',
       borderRadius: 'var(--radius)',
-      padding: '20px 24px',
+      padding: '20px 24px 100px',
       boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       margin: '0 24px 20px',
     }}>
-      {/* Title row */}
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: '4px',
-      }}>
+      {/* Header: title + distance + pills + prompt — fades up first */}
+      <div style={{ animation: 'fadeUp 0.5s ease 0s both' }}>
+        {/* Title row */}
         <div style={{
-          fontFamily: 'var(--font-fraunces)',
-          fontSize: '22px', fontWeight: 700, color: 'var(--ink)',
-          lineHeight: 1.2,
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'flex-start', marginBottom: '4px',
         }}>
-          {title}
-        </div>
-        {status && <SessionStatusBadge status={status} />}
-      </div>
-
-      {/* Distance */}
-      <p style={{
-        fontFamily: 'var(--font-dm-sans)',
-        fontSize: '14px', color: 'var(--ink-soft)', opacity: 0.6,
-        margin: '4px 0 16px',
-      }}>
-        ~{totalDistanceM}m planned
-      </p>
-
-      {/* Request pills */}
-      {request && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
-          <span style={{
-            border: '1.5px solid var(--fog-dark)', background: 'white',
-            borderRadius: '100px', padding: '6px 14px',
-            fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
-            color: 'var(--ink-soft)',
+          <div style={{
+            fontFamily: 'var(--font-fraunces)',
+            fontSize: '26px', fontWeight: 700, color: 'var(--ink)',
+            lineHeight: 1.2, letterSpacing: '-0.5px',
           }}>
-            {request.duration_minutes} min
-          </span>
-          {effortPill && (
+            {title}
+          </div>
+          {status && <SessionStatusBadge status={status} />}
+        </div>
+
+        {/* Distance */}
+        <p style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '14px', color: 'var(--ink-soft)', opacity: 0.5,
+          margin: '4px 0 12px',
+        }}>
+          ~{totalDistanceM}m
+        </p>
+
+        {/* Request pills */}
+        {request && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
             <span style={{
-              border: `1.5px solid ${effortPill.border}`,
-              background: effortPill.bg,
+              border: '1.5px solid var(--fog-dark)', background: 'white',
               borderRadius: '100px', padding: '6px 14px',
               fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
-              color: effortPill.color, textTransform: 'capitalize',
+              color: 'var(--ink-soft)',
             }}>
-              {request.effort}
+              {request.duration_minutes} min
             </span>
-          )}
-          {(request.requested_tags ?? []).slice(0, 5).map((tag) => (
-            <span
-              key={tag}
-              style={{
-                border: '1.5px solid var(--fog-dark)', background: 'white',
+            {effortPill && (
+              <span style={{
+                border: `1.5px solid ${effortPill.border}`,
+                background: effortPill.bg,
                 borderRadius: '100px', padding: '6px 14px',
                 fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
-                color: 'var(--ink-soft)', textTransform: 'capitalize',
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+                color: effortPill.color, textTransform: 'capitalize',
+              }}>
+                {request.effort}
+              </span>
+            )}
+            {(request.requested_tags ?? []).slice(0, 5).map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  border: '1.5px solid var(--fog-dark)', background: 'white',
+                  borderRadius: '100px', padding: '6px 14px',
+                  fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
+                  color: 'var(--ink-soft)', textTransform: 'capitalize',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Prompt nudge */}
+        <p style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '13px', fontStyle: 'italic',
+          color: 'var(--ink-soft)', opacity: 0.5,
+          margin: '12px 0 0',
+        }}>
+          Swim the session below — tap Done when you&apos;re finished.
+        </p>
+        <div style={{ borderBottom: '1px solid var(--fog-dark)', margin: '12px 0 20px' }} />
+      </div>
 
       {/* Plan breakdown */}
       <PlanBreakdown segments={plan.segments} />

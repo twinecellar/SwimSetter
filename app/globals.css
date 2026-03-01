@@ -330,6 +330,17 @@ a {
 }
 .goby-accept-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
+/* ── Finish (Done) button ────────────────────────────── */
+.goby-finish-btn { transition: all 0.18s ease; }
+.goby-finish-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(59,175,126,0.45) !important;
+}
+.goby-finish-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(59,175,126,0.25) !important;
+}
+
 /* ── Fish bubbles button icon ─────────────────────────── */
 .fish-bubbles {
   position: relative;
@@ -396,6 +407,63 @@ a {
 .dur-unit {
   position: relative;
   z-index: 1;
+}
+
+/* ── Completion Screen ───────────────────────────────── */
+.completion-card {
+  padding-bottom: 120px;
+}
+
+.completion-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px 36px;
+  background: linear-gradient(to top, var(--fog) 60%, rgba(238,243,247,0));
+  z-index: 100;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.completion-save-btn { transition: all 0.18s ease; }
+.completion-save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(245,200,0,0.5) !important;
+}
+.completion-save-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(245,200,0,0.3) !important;
+}
+.completion-save-btn:disabled { opacity: 0.6; cursor: default; }
+
+.completion-rating-btn { transition: all 0.18s ease; }
+.completion-rating-btn:hover {
+  border-color: var(--ink-soft) !important;
+}
+
+.completion-tag-chip { transition: all 0.16s ease; }
+
+.completion-tag-input { transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease; }
+.completion-tag-input:focus {
+  border-color: var(--water) !important;
+  box-shadow: 0 0 0 3px rgba(59,158,191,0.12) !important;
+  background-color: white !important;
+}
+.completion-tag-input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.4;
+}
+
+.completion-textarea { transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease; }
+.completion-textarea:focus {
+  border-color: var(--water) !important;
+  box-shadow: 0 0 0 3px rgba(59,158,191,0.12) !important;
+  background-color: white !important;
+}
+.completion-textarea::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.4;
 }
 
 /* ── Effort button fill animation ────────────────────── */

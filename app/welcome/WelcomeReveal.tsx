@@ -88,7 +88,7 @@ export function WelcomeReveal({ species }: { species: GobySpecies }) {
 
         {/* Continue button */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/plans')}
           className="goby-generate-btn"
           style={{
             width: '100%', maxWidth: '320px',

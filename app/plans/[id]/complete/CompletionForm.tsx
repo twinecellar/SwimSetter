@@ -11,14 +11,11 @@ interface CompletionFormProps {
 
 const SUGGESTED_TAGS = ["fun", "easy", "hard", "long", "short"];
 
-const RATING_OPTIONS = [
-  { value: 1 as const, label: "Good session", img: "/thumb_up.png" },
-  { value: 0 as const, label: "Rough one",    img: "/thumb_down.png" },
-];
+type Rating = 1 | 0;
 
 export function CompletionForm({ planId, children }: CompletionFormProps) {
   const router = useRouter();
-  const [rating, setRating] = useState<0 | 1>(1);
+  const [rating, setRating] = useState<Rating | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   const [notes, setNotes] = useState("");
@@ -41,6 +38,7 @@ export function CompletionForm({ planId, children }: CompletionFormProps) {
   }
 
   async function saveCompletion() {
+    if (rating === null) return;
     setSaving(true);
     setError(null);
 
@@ -74,87 +72,228 @@ export function CompletionForm({ planId, children }: CompletionFormProps) {
     }
   }
 
+  const divider = (
+    <div style={{ borderTop: '1px solid var(--fog-dark)', margin: '20px 0' }} />
+  );
+
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
         void saveCompletion();
       }}
-      className="space-y-4"
     >
-      {/* Rating */}
-      <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-        <label className="block text-sm font-medium text-slate-200">How was it?</label>
-        <div className="flex gap-3">
-          {RATING_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setRating(option.value)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-md border py-3 text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: rating === option.value ? "rgba(0,200,216,0.12)" : "transparent",
-                borderColor: rating === option.value ? "#00C8D8" : "#334155",
-                color: rating === option.value ? "#006D7A" : "#94a3b8",
-              }}
-            >
-              <img src={option.img} alt="" width={20} height={20} />
-              {option.label}
-            </button>
-          ))}
+      {/* Single content card */}
+      <div
+        className="completion-card"
+        style={{
+          background: 'white',
+          borderRadius: 'var(--radius) var(--radius) 0 0',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          padding: '24px',
+          margin: '0 24px',
+        }}
+      >
+        {/* Rating buttons */}
+        <div style={{ animation: 'fadeUp 0.4s ease 0.08s both' }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <RatingButton
+              label="Good session"
+              selected={rating === 1}
+              selectedBg="var(--mint-light)"
+              selectedBorder="var(--mint)"
+              selectedColor="var(--mint)"
+              selectedShadow="0 4px 12px rgba(59,175,126,0.15)"
+              onClick={() => setRating(rating === 1 ? null : 1)}
+              icon={<ThumbUpIcon selected={rating === 1} color="var(--mint)" />}
+            />
+            <RatingButton
+              label="Rough one"
+              selected={rating === 0}
+              selectedBg="var(--coral-light)"
+              selectedBorder="var(--coral)"
+              selectedColor="var(--coral)"
+              selectedShadow="0 4px 12px rgba(232,98,74,0.15)"
+              onClick={() => setRating(rating === 0 ? null : 0)}
+              icon={<ThumbDownIcon selected={rating === 0} color="var(--coral)" />}
+            />
+          </div>
         </div>
-      </section>
 
-      {children}
+        {divider}
 
-      {/* Tags */}
-      <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-        <CompletionTags
-          selected={tags}
-          suggested={SUGGESTED_TAGS}
-          customTag={customTag}
-          onToggleTag={toggleTag}
-          onCustomTagChange={setCustomTag}
-          onAddCustomTag={addCustomTag}
-        />
-      </section>
+        {/* Session summary (injected from server) */}
+        <div style={{ animation: 'fadeUp 0.4s ease 0.14s both' }}>
+          {children}
+        </div>
 
-      {/* Notes */}
-      <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-        <label className="block text-sm font-medium text-slate-200">Notes</label>
-        <textarea
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-sky-500"
-          placeholder="Anything to remember for next time? (optional)"
-        />
-      </section>
+        {divider}
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+        {/* Tags & notes */}
+        <div style={{ animation: 'fadeUp 0.4s ease 0.20s both' }}>
+          <CompletionTags
+            selected={tags}
+            suggested={SUGGESTED_TAGS}
+            customTag={customTag}
+            onToggleTag={toggleTag}
+            onCustomTagChange={setCustomTag}
+            onAddCustomTag={addCustomTag}
+          />
+        </div>
 
-      <div className="space-y-2">
+        {divider}
+
+        {/* Notes */}
+        <div style={{ animation: 'fadeUp 0.4s ease 0.26s both' }}>
+          <p style={{
+            fontFamily: 'var(--font-fraunces)',
+            fontSize: '17px', fontWeight: 600,
+            color: 'var(--ink)', margin: '0 0 12px',
+          }}>
+            Anything to remember?
+          </p>
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            className="completion-textarea"
+            placeholder="Anything to remember for next time? (optional)"
+            style={{
+              width: '100%',
+              background: 'var(--fog)',
+              border: '1.5px solid var(--fog-dark)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '14px 16px',
+              fontFamily: 'var(--font-dm-sans)',
+              fontSize: '14px',
+              color: 'var(--ink)',
+              lineHeight: 1.6,
+              minHeight: '100px',
+              resize: 'vertical',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {error && (
+          <p style={{
+            color: 'var(--coral)',
+            fontFamily: 'var(--font-dm-sans)',
+            fontSize: '14px',
+            marginTop: '16px',
+          }}>
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* Sticky save footer */}
+      <div
+        className="completion-footer"
+        style={{ animation: 'fadeUp 0.4s ease 0.32s both' }}
+      >
         <button
           type="submit"
-          disabled={saving}
-          className="flex w-full items-center justify-center rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          disabled={saving || rating === null}
+          className="completion-save-btn"
           style={{
-            backgroundColor: "#10b981",
-            borderColor: "#10b981",
-            color: "#111827",
+            width: '100%',
+            background: 'var(--yolk)',
+            border: 'none',
+            borderRadius: 'var(--radius)',
+            padding: '18px 24px',
+            fontFamily: 'var(--font-fraunces)',
+            fontSize: '18px',
+            fontWeight: 700,
+            color: 'var(--ink)',
+            letterSpacing: '-0.3px',
+            cursor: rating === null ? 'default' : 'pointer',
+            boxShadow: '0 4px 16px rgba(245,200,0,0.25)',
           }}
         >
-          {saving ? "Saving..." : "Save completion"}
-        </button>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => router.push("/?return=completion")}
-          className="flex w-full items-center justify-center rounded-md border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 disabled:opacity-60"
-        >
-          Cancel
+          {saving ? "Saving..." : "Save session"}
         </button>
       </div>
     </form>
+  );
+}
+
+/* ── Sub-components ─────────────────────────────────── */
+
+interface RatingButtonProps {
+  label: string;
+  selected: boolean;
+  selectedBg: string;
+  selectedBorder: string;
+  selectedColor: string;
+  selectedShadow: string;
+  onClick: () => void;
+  icon: React.ReactNode;
+}
+
+function RatingButton({
+  label,
+  selected,
+  selectedBg,
+  selectedBorder,
+  selectedColor,
+  selectedShadow,
+  onClick,
+  icon,
+}: RatingButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="completion-rating-btn"
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '16px 12px',
+        borderRadius: 'var(--radius)',
+        border: `1.5px solid ${selected ? selectedBorder : 'var(--fog-dark)'}`,
+        background: selected ? selectedBg : 'white',
+        color: selected ? selectedColor : 'var(--ink-soft)',
+        fontFamily: 'var(--font-dm-sans)',
+        fontSize: '15px',
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: selected ? selectedShadow : 'none',
+        transform: selected ? 'translateY(-1px)' : 'none',
+        transition: 'all 0.18s ease',
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function ThumbUpIcon({ selected, color }: { selected: boolean; color: string }) {
+  return (
+    <svg
+      width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke={selected ? color : 'var(--ink-soft)'}
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <path d="M7 10v12" />
+      <path d="M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+    </svg>
+  );
+}
+
+function ThumbDownIcon({ selected, color }: { selected: boolean; color: string }) {
+  return (
+    <svg
+      width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke={selected ? color : 'var(--ink-soft)'}
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <path d="M17 14V2" />
+      <path d="M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L13 22a3.13 3.13 0 0 1-3-3.88Z" />
+    </svg>
   );
 }

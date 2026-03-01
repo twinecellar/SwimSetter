@@ -18,53 +18,90 @@ export function CompletionTags({
   onAddCustomTag,
 }: CompletionTagsProps) {
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-medium text-slate-200">
-        Tags
-        <span className="ml-1 text-xs font-normal text-slate-400">
-          (pick a few that describe how it felt)
-        </span>
-      </label>
+    <div>
+      <p style={{
+        fontFamily: 'var(--font-fraunces)',
+        fontSize: '17px', fontWeight: 600,
+        color: 'var(--ink)', margin: '0 0 2px',
+      }}>
+        How did it feel?
+      </p>
+      <p style={{
+        fontFamily: 'var(--font-dm-sans)',
+        fontSize: '13px',
+        color: 'var(--ink-soft)', opacity: 0.5,
+        margin: '0 0 14px',
+      }}>
+        Pick as many as apply.
+      </p>
 
-      <div className="flex flex-wrap gap-2">
-        {suggested.map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            onClick={() => onToggleTag(tag)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              selected.includes(tag)
-                ? "border-sky-500 bg-sky-500/20 text-sky-300"
-                : "border-slate-700 bg-slate-800/60 text-slate-300"
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        {[...suggested, ...selected.filter((t) => !suggested.includes(t))].map((tag) => {
+          const isSelected = selected.includes(tag);
+          return (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => onToggleTag(tag)}
+              className="goby-tag-chip completion-tag-chip"
+              style={{
+                border: `1.5px solid ${isSelected ? 'var(--ink)' : 'var(--fog-dark)'}`,
+                background: isSelected ? 'var(--ink)' : 'white',
+                color: isSelected ? 'var(--yolk)' : 'var(--ink-soft)',
+                borderRadius: '100px',
+                padding: '9px 16px',
+                fontFamily: 'var(--font-dm-sans)',
+                fontSize: '14px', fontWeight: 500,
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+              }}
+            >
+              {tag}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
         <input
           type="text"
           value={customTag}
           onChange={(event) => onCustomTagChange(event.target.value)}
-          placeholder="Custom tag"
-          className="flex-1 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-sky-500"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') { event.preventDefault(); onAddCustomTag(); }
+          }}
+          placeholder="Add your own…"
+          className="completion-tag-input"
+          style={{
+            flex: 1,
+            background: 'var(--fog)',
+            border: '1.5px solid var(--fog-dark)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '12px 16px',
+            fontFamily: 'var(--font-dm-sans)',
+            fontSize: '14px',
+            color: 'var(--ink)',
+            outline: 'none',
+          }}
         />
         <button
           type="button"
           onClick={onAddCustomTag}
-          className="rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-xs font-medium text-slate-300 hover:border-sky-500 hover:text-sky-300"
+          style={{
+            background: 'var(--ink)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 'var(--radius-sm)',
+            padding: '12px 16px',
+            fontFamily: 'var(--font-dm-sans)',
+            fontSize: '13px', fontWeight: 600,
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
         >
           Add
         </button>
       </div>
-
-      {selected.length > 0 && (
-        <p className="text-xs text-slate-400">
-          Selected: <span className="font-medium text-slate-200">{selected.join(", ")}</span>
-        </p>
-      )}
     </div>
   );
 }

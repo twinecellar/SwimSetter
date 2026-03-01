@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { HistoryList } from "@/app/components/HistoryList";
 import { PlanCard } from "@/app/components/PlanCard";
+import { DoneButton } from "@/app/components/DoneButton";
 import type { CompletionRow, PlanRow } from "@/lib/plan-types";
 import { completionByPlanId } from "@/lib/plan-utils";
 import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
@@ -92,27 +92,33 @@ export default async function PlansPage() {
     <div>
       {/* Current session */}
       {currentPlan && (
-        <PlanCard
-          title="Current session"
-          request={currentPlan.request}
-          plan={currentPlan.plan}
-          status="planned"
-          actions={
-            <Link
+        <>
+          <PlanCard
+            title="Your session"
+            request={currentPlan.request}
+            plan={currentPlan.plan}
+          />
+          {/* Sticky footer — always-visible finish action */}
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px 24px 36px',
+            background: 'linear-gradient(to top, var(--fog) 60%, rgba(238,243,247,0))',
+            zIndex: 100,
+            maxWidth: '390px',
+            margin: '0 auto',
+            animation: 'fadeUp 0.5s ease 0.28s both',
+          }}>
+            <DoneButton
               href={`/plans/${currentPlan.id}/complete`}
-              prefetch={false}
-              style={{
-                display: 'inline-flex', alignItems: 'center',
-                background: 'var(--mint)', borderRadius: 'var(--radius-sm)',
-                padding: '10px 18px', textDecoration: 'none',
-                fontFamily: 'var(--font-dm-sans)', fontSize: '14px', fontWeight: 600,
-                color: 'white',
-              }}
-            >
-              Finish
-            </Link>
-          }
-        />
+              effort={currentPlan.request.effort}
+              duration_minutes={currentPlan.request.duration_minutes}
+              tags={currentPlan.request.requested_tags ?? []}
+            />
+          </div>
+        </>
       )}
 
       {historyPlans.length > 0 && (

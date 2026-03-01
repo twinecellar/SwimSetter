@@ -105,7 +105,7 @@ export default function GeneratePlanPage() {
         return;
       }
 
-      router.push("/");
+      router.push("/plans");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

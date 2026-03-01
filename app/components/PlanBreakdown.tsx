@@ -81,9 +81,10 @@ export function PlanBreakdown({ segments }: PlanBreakdownProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {groups.map((group) => {
+      {groups.map((group, idx) => {
         const dotColor = SECTION_DOT[group.title] ?? "var(--fog-dark)";
         const sectionDistance = group.items.reduce((sum, s) => sum + s.distance_m, 0);
+        const delay = `${0.08 + idx * 0.06}s`;
 
         return (
           <section
@@ -94,6 +95,7 @@ export function PlanBreakdown({ segments }: PlanBreakdownProps) {
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               padding: '16px 20px',
               overflow: 'hidden',
+              animation: `fadeUp 0.5s ease ${delay} both`,
             }}
           >
             {/* Section header */}

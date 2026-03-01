@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
@@ -14,25 +13,6 @@ function formatDistance(metres: number): string {
   return `${metres}m`;
 }
 
-function levelPillStyle(level: string): CSSProperties {
-  switch (level) {
-    case 'advanced':
-      return {
-        background: 'var(--water-light)', color: 'var(--water)',
-        border: '1.5px solid var(--water)',
-      };
-    case 'intermediate':
-      return {
-        background: '#FFF5E6', color: 'var(--coral)',
-        border: '1.5px solid var(--coral)',
-      };
-    default: // beginner
-      return {
-        background: 'var(--mint-light)', color: 'var(--mint)',
-        border: '1.5px solid var(--mint)',
-      };
-  }
-}
 
 export default async function ProfilePage() {
   const supabase = createSupabaseServerClient();
@@ -84,8 +64,6 @@ export default async function ProfilePage() {
   const species = (profile.goby_species as GobySpecies | null) ?? "neon";
   const gobyProfile = GOBY_PROFILES[species];
   const FishComponent = GOBY_FISH_COMPONENTS[species];
-  const swimLevel = (profile.swim_level as string) ?? "beginner";
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -164,27 +142,6 @@ export default async function ProfilePage() {
           }}>
             Your goby will evolve as you complete more sessions.
           </p>
-        </div>
-
-        {/* Swim level pill */}
-        <div style={{ marginBottom: '28px' }}>
-          <p style={{
-            fontFamily: 'var(--font-dm-sans)',
-            fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-            letterSpacing: '0.08em', color: 'var(--ink-soft)', opacity: 0.4,
-            margin: '0 0 8px',
-          }}>
-            Swim level
-          </p>
-          <span style={{
-            display: 'inline-block',
-            borderRadius: '100px', padding: '6px 14px',
-            fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 600,
-            textTransform: 'capitalize',
-            ...levelPillStyle(swimLevel),
-          }}>
-            {swimLevel}
-          </span>
         </div>
 
         {/* Stats */}
