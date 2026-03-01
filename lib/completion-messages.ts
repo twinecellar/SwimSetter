@@ -66,7 +66,6 @@ export const completionMessages = {
   // Takes priority over effort messages for short sessions
   short: [
     "Quick dip?",
-    "Short but sweet?",
     "Fast and done?",
     "Twenty minutes well spent?",
     "In and out?",
@@ -76,9 +75,7 @@ export const completionMessages = {
     "No messing about.",
     "Straight to business?",
     "Every minute counted?",
-    "Hit and run?",
     "Flash swim.",
-    "Got it done quick.",
     "Efficient.",
   ],
 

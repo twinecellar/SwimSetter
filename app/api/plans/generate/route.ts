@@ -162,6 +162,7 @@ export async function POST(request: Request) {
       duration_minutes: requestInput.duration_minutes,
       effort: requestInput.effort,
       requested_tags: requestInput.requested_tags ?? [],
+      swim_level: profileRow.swim_level ?? undefined,
     },
     historic_sessions: ((completions ?? [])
       .map((completion) => {

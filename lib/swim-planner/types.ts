@@ -23,6 +23,7 @@ export interface SessionRequested {
   duration_minutes: number;
   effort: Effort;
   requested_tags: string[];
+  swim_level?: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface HistoricSession {

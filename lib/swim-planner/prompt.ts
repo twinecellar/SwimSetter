@@ -264,14 +264,13 @@ const TAG_HINT_MAP: Record<string, string> = {
     'Prefer continuous swimming over intervals. Use generous rest between any effort ' +
     'changes (45-60s). Target the low end of the distance range. No intensity spikes.',
   fun:
-    'Create a genuinely varied and playful session. The main set MUST use at least two different ' +
-    'step kinds (e.g. a pyramid followed by a build, or a descending set followed by intervals). ' +
-    'Mix strokes, formats, or distances across steps. Include at least one step that is structurally ' +
-    'different from a standard interval set — e.g. a pyramid, a negative split, or a build. ' +
-    'Descriptions should be warm, encouraging, and specific. Avoid clinical language.' +
-    'Make this session feel like play, not training. Use at least one pyramid or descending set. ' +
-    'Mix strokes if possible. Include one step with an unusual format — a build, a negative split, ' +
-    'or a hypoxic set. Keep descriptions light and fun. Avoid anything that sounds like a race or a test.',
+    'Make this session feel like play, not training. ' +
+    'The main set MUST contain at least two steps with different formats — ' +
+    'e.g. a pyramid followed by a build, a descending set followed by intervals, or any other combination. ' +
+    'Include at least one structurally unusual step: a pyramid, descending set, negative split, build, or hypoxic set. ' +
+    'Mix strokes across steps where possible. ' +
+    'Step descriptions should be warm, encouraging, and specific — never clinical, never race-like. ' +
+    'Avoid anything that sounds like a test or a time trial.',
   steady:
     'Aerobic threshold pace. All reps at the same controlled, repeatable effort with ' +
     'consistent rest. Avoid mixed pacing. Descriptions should emphasise holding a steady tempo. ' +
@@ -319,6 +318,35 @@ function requestedTagHints(requestedTags: string[]): string {
     return 'Reflect requested tags in step descriptions and structure where compatible with constraints.';
   }
   return hints.join(' ');
+}
+
+// ── Swim level guidance ───────────────────────────────────────────────────────
+
+function swimLevelHint(level: string): string {
+  const map: Record<string, string> = {
+    beginner:
+      'This swimmer is new to structured swim training. ' +
+      'Use simple, familiar formats only — continuous swims and straightforward intervals. ' +
+      'No pyramids, descending sets, or multi-step main sets. ' +
+      'Keep rest generous (30-45s between intervals). ' +
+      'Step descriptions must be especially clear and encouraging — avoid any assumed knowledge. ' +
+      'Favour shorter rep distances (50-100m per rep). ' +
+      'Do not use drill names without explaining them briefly in the description.',
+    intermediate:
+      'This swimmer understands basic interval formats and rest-based sets. ' +
+      'Standard interval structures, continuous swims, and simple pyramids are all appropriate. ' +
+      'Rest can be moderate (15-30s). ' +
+      'Step descriptions can assume basic swim literacy (e.g. the swimmer knows what a pull buoy is). ' +
+      'Avoid highly technical drill circuits unless the technique tag is requested.',
+    advanced:
+      'This swimmer is comfortable with interval training, understands pace and effort, ' +
+      'and can follow complex set structures. ' +
+      'Pyramids, descending sets, ascending sets, negative splits, and drill circuits are all appropriate. ' +
+      'Rest periods can be shorter (10-20s for hard efforts). ' +
+      'Step descriptions can be concise and technically precise. ' +
+      'Challenge the swimmer — do not over-simplify.',
+  };
+  return map[level] ?? '';
 }
 
 // ── Effort guidance ───────────────────────────────────────────────────────────
@@ -448,6 +476,13 @@ export function buildUserPrompt(payload: SwimPlanInput, historySummary: string):
 
   const sessionOverride = sessionTypeOverride(requestedTags, effort);
 
+  const swimLevelGuidance = payload.session_requested.swim_level
+    ? `SWIM LEVEL:\n` +
+      `The swimmer's level is '${payload.session_requested.swim_level}'.\n` +
+      swimLevelHint(payload.session_requested.swim_level) +
+      '\n\n'
+    : '';
+
   const overrideBlock = sessionOverride
     ? `SESSION OVERRIDE (takes precedence over EFFORT GUIDANCE for main_set structure):\n${sessionOverride}\n\n`
     : '';
@@ -470,6 +505,7 @@ export function buildUserPrompt(payload: SwimPlanInput, historySummary: string):
     'REQUEST:\n' +
     JSON.stringify(payload.session_requested, Object.keys(payload.session_requested).sort() as any) +
     '\n\n' +
+    swimLevelGuidance +
     overrideBlock +
     'INFERRED STYLE:\n' +
     inferredStyle +
@@ -533,8 +569,8 @@ export function buildUserPrompt(payload: SwimPlanInput, historySummary: string):
     '- Step descriptions must be concise: one brief sentence with the single most important coaching cue. Do not write multiple sentences.\n' +
     '- Step descriptions must use plain, everyday language. Never use technical terms — do not use words like \'phosphocreatine\', \'lactate\', \'aerobic\', \'anaerobic\', \'threshold\', \'ATP\', \'fast-twitch\', or \'energy systems\' in descriptions.\n' +
     '- Step descriptions must not use informal or cutesy words for pace or energy — do not use words like \'peppier\', \'zippy\', \'snappy\', \'punchy\', or similar. Use direct coaching language: faster, stronger, building, controlled.\n' +
-    '- Step descriptions must NOT mention specific distances or metres. Cue effort, technique, or sensation — never say "start at 100m" or "drop to 50m" in a description.\n' +
-    '- Step descriptions must NOT use "longer" or "shorter" to describe pace or effort — distance per rep is always fixed. Use "faster" or "slower" instead. "Long" and "short" are only permitted as stroke-length technique cues (e.g. "long, smooth strokes").\n' +
+    '- Step descriptions must never reference distances, metres, or rep lengths — this applies even to pyramid, descending, and ascending steps where distances do vary. Banned phrases include: "reducing distance", "as repeats get shorter", "as the distance shrinks", "distances decrease" , "distances increase", "drop to 50m", "start at 100m", "shorter reps", "longer reps". The swimmer does not need to know the structure — cue only effort and body sensation: push harder on each rep, accelerate through the set, hold your pace, build to a strong finish.\n' +
+    '- "Long" and "short" are only permitted as stroke-length technique cues (e.g. "long, smooth strokes"). Do not use them to describe rep length or set structure.\n' +
     '- Step descriptions must match the step\'s kind. Do not write a descending or pyramid description for an intervals or continuous step, and vice versa.\n' +
     '- Do not use physical analogies that do not apply to swimming (e.g. gravity, wind). Keep descriptions grounded in the swimmer\'s body and the water.\n' +
     '- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n' +

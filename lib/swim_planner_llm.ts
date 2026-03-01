@@ -7,6 +7,7 @@ export interface SwimPlannerSessionRequested {
   duration_minutes: number;
   effort: 'easy' | 'medium' | 'hard';
   requested_tags: string[];
+  swim_level?: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface SwimPlannerHistoricSession {
