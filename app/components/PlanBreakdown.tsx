@@ -1,18 +1,17 @@
 import type { Effort, PlanSegment } from "@/lib/plan-types";
 import { groupSegments } from "@/lib/plan-utils";
-import { EFFORT_SOLID } from "@/lib/effort-colors";
 
-const GROUP_ACCENT: Record<string, string> = {
-  "Warm up":   "#00C8D8", // cyan
-  "Main":      "#FFD700", // yellow
-  "Cool down": "#94a3b8", // slate-400
+const SECTION_DOT: Record<string, string> = {
+  "Warm up":   "var(--mint)",
+  "Main":      "var(--yolk)",
+  "Cool down": "rgba(61,61,82,0.3)",
 };
 
-const EFFORT_LEGEND: { label: string; effort: Effort }[] = [
-  { label: "Easy",   effort: "easy"   },
-  { label: "Medium", effort: "medium" },
-  { label: "Hard",   effort: "hard"   },
-];
+const EFFORT_LEFT_BORDER: Record<Effort, string> = {
+  easy:   "var(--mint)",
+  medium: "var(--yolk-dark)",
+  hard:   "var(--coral)",
+};
 
 function formatRest(seconds: number | undefined): string | null {
   if (!seconds || seconds <= 0) return null;
@@ -22,32 +21,52 @@ function formatRest(seconds: number | undefined): string | null {
   return s === 0 ? `${m}m rest` : `${m}:${String(s).padStart(2, "0")} rest`;
 }
 
-
-function boldDescription(description: string): React.ReactNode {
+function parseDescription(description: string): { title: string; cue: string | null } {
   const idx = description.indexOf(" - ");
-  if (idx === -1) return <strong className="font-semibold text-slate-100">{description}</strong>;
-  return (
-    <>
-      <strong className="font-semibold text-slate-100">{description.slice(0, idx)}</strong>
-      {description.slice(idx)}
-    </>
-  );
+  if (idx === -1) return { title: description, cue: null };
+  return { title: description.slice(0, idx), cue: description.slice(idx + 3) };
 }
 
-function SegmentRow({ segment }: { segment: PlanSegment }) {
-  const color = EFFORT_SOLID[segment.effort as Effort] ?? "#64748b";
+function SegmentRow({ segment, isLast }: { segment: PlanSegment; isLast: boolean }) {
+  const borderColor = EFFORT_LEFT_BORDER[segment.effort as Effort] ?? "var(--fog-dark)";
   const rest = formatRest(segment.rest_seconds);
+  const { title, cue } = parseDescription(segment.description);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-slate-800/60 px-3 py-2.5">
-      <span
-        className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-        style={{ backgroundColor: color }}
-        aria-label={segment.effort}
-      />
-      <span className="flex-1 text-sm text-slate-200">{boldDescription(segment.description)}</span>
-      {rest && (
-        <span className="flex-shrink-0 text-xs text-slate-500 tabular-nums">{rest}</span>
+    <div style={{
+      paddingTop: '12px', paddingBottom: '12px',
+      paddingLeft: '12px',
+      borderBottom: isLast ? 'none' : '1px solid var(--fog-dark)',
+      borderLeft: `3px solid ${borderColor}`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+        <span style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
+          lineHeight: 1.4,
+        }}>
+          {title}
+        </span>
+        {rest && (
+          <span style={{
+            background: 'var(--fog-dark)', color: 'var(--ink-soft)',
+            borderRadius: '100px', padding: '4px 10px',
+            fontFamily: 'var(--font-dm-sans)', fontSize: '12px', fontWeight: 500,
+            flexShrink: 0, whiteSpace: 'nowrap',
+          }}>
+            {rest}
+          </span>
+        )}
+      </div>
+      {cue && (
+        <p style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '14px', fontWeight: 400,
+          color: 'var(--ink-soft)', marginTop: '4px',
+          lineHeight: 1.5, marginBottom: 0,
+        }}>
+          {cue}
+        </p>
       )}
     </div>
   );
@@ -61,40 +80,66 @@ export function PlanBreakdown({ segments }: PlanBreakdownProps) {
   const groups = groupSegments(segments);
 
   return (
-    <div className="space-y-3">
-      {groups.map((group) => (
-        <section
-          key={group.title}
-          className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-3"
-          style={{ borderLeftColor: GROUP_ACCENT[group.title] ?? "#e2e8f0", borderLeftWidth: "3px" }}
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-slate-300">
-              {group.title}
-            </h4>
-            <span className="text-xs text-slate-500">
-              {group.items.reduce((sum, s) => sum + s.distance_m, 0)}m
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {group.items.map((segment) => (
-              <SegmentRow key={segment.id} segment={segment} />
-            ))}
-          </div>
-        </section>
-      ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {groups.map((group) => {
+        const dotColor = SECTION_DOT[group.title] ?? "var(--fog-dark)";
+        const sectionDistance = group.items.reduce((sum, s) => sum + s.distance_m, 0);
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 px-1">
-        {EFFORT_LEGEND.map(({ label, effort }) => (
-          <div key={label} className="flex items-center gap-1.5">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: EFFORT_SOLID[effort] }}
-            />
-            <span className="text-xs text-slate-500">{label}</span>
-          </div>
-        ))}
-      </div>
+        return (
+          <section
+            key={group.title}
+            style={{
+              background: 'white',
+              borderRadius: 'var(--radius)',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              padding: '16px 20px',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Section header */}
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', marginBottom: '12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  width: '6px', height: '6px', borderRadius: '50%',
+                  background: dotColor, flexShrink: 0, display: 'inline-block',
+                }} />
+                <span style={{
+                  fontFamily: 'var(--font-dm-sans)',
+                  fontSize: '11px', fontWeight: 600,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: 'var(--ink-soft)', opacity: 0.5,
+                }}>
+                  {group.title}
+                </span>
+              </div>
+              <span style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontSize: '16px', fontWeight: 600,
+                color: 'var(--ink-soft)', opacity: 0.4,
+              }}>
+                {sectionDistance}m
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div style={{ borderTop: '1px solid var(--fog-dark)' }} />
+
+            {/* Steps */}
+            <div>
+              {group.items.map((segment, i) => (
+                <SegmentRow
+                  key={segment.id}
+                  segment={segment}
+                  isLast={i === group.items.length - 1}
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

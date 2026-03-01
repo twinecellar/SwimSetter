@@ -9,6 +9,7 @@ import { isDurationMinutes, normalizeRequestedTags } from "@/lib/request-options
 
 export default function GeneratePlanPage() {
   const router = useRouter();
+
   const [request, setRequest] = useState<PlanRequest>({
     duration_minutes: 30,
     effort: "medium",
@@ -19,34 +20,20 @@ export default function GeneratePlanPage() {
   const [generating, setGenerating] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    async function ensureProfileAndPrefill() {
+    async function prefill() {
       const response = await fetch("/api/profile/history");
-      if (response.status === 401) {
-        router.replace("/auth");
-        return;
-      }
-      if (response.status === 429) {
-        setError("Too many auth requests. Wait about a minute, then retry.");
-        return;
-      }
-
-      if (!response.ok) {
-        setError("Unable to load profile data. Please retry.");
-        return;
-      }
+      if (response.status === 401) { router.replace("/auth"); return; }
+      if (response.status === 429) { setError("Too many auth requests. Wait about a minute, then retry."); return; }
+      if (!response.ok) { setError("Unable to load profile data. Please retry."); return; }
 
       const json = (await response.json()) as {
         profile: { id: string } | null;
         plans: PlanRow[];
       };
 
-      if (!json.profile) {
-        router.replace("/onboarding");
-        return;
-      }
+      if (!json.profile) { router.replace("/onboarding"); return; }
 
       const mostRecentRequest = json.plans?.[0]?.request;
       if (mostRecentRequest) {
@@ -60,11 +47,10 @@ export default function GeneratePlanPage() {
       }
     }
 
-    void ensureProfileAndPrefill();
+    void prefill();
   }, [router]);
 
   async function handleGenerate() {
-    const hadPlan = !!plan;
     setGenerating(true);
     setError(null);
 
@@ -81,21 +67,14 @@ export default function GeneratePlanPage() {
           setError("Too many auth requests. Wait about a minute, then retry.");
           return;
         }
-        if (json.code === "NO_PROFILE") {
-          router.push("/onboarding");
-          return;
-        }
+        if (json.code === "NO_PROFILE") { router.push("/onboarding"); return; }
         setError(json.error ?? "Failed to generate plan.");
         return;
       }
 
-      const json = (await response.json()) as {
-        plan: GeneratedPlan;
-        request: PlanRequest;
-      };
+      const json = (await response.json()) as { plan: GeneratedPlan; request: PlanRequest };
       setPlan(json.plan);
       setGeneratedRequest(json.request);
-      setGeneratedAt(hadPlan ? "Regenerated just now." : "Generated just now.");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -135,57 +114,104 @@ export default function GeneratePlanPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-5">
-        <GenerateControls value={request} disabled={generating || accepting} onChange={setRequest} />
+    <div>
+      {/* Hero heading */}
+      <div style={{ padding: '8px 24px 28px', animation: 'fadeUp 0.4s ease 0.12s both' }}>
+        <h2 style={{
+          fontFamily: 'var(--font-fraunces)',
+          fontSize: '24px', fontWeight: 600, lineHeight: 1.25,
+          letterSpacing: '-0.5px', color: 'var(--ink)',
+          margin: 0,
+        }}>
+          What are you feeling{' '}
+          <em style={{ fontStyle: 'italic', color: 'var(--water)' }}>today?</em>
+        </h2>
+      </div>
 
+      {/* Form controls */}
+      <GenerateControls
+        value={request}
+        onChange={setRequest}
+        disabled={generating || accepting}
+      />
+
+      {/* Generate button */}
+      <div style={{ animation: 'fadeUp 0.4s ease 0.3s both', padding: '0 24px 32px' }}>
         <button
           type="button"
           onClick={handleGenerate}
           disabled={generating || accepting}
-          className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          className={`goby-generate-btn${generating ? ' is-generating' : ''}`}
           style={{
-            backgroundColor: plan ? "#003366" : "#FFD700",
-            borderColor: plan ? "#003366" : "#FFD700",
-            color: plan ? "#ffffff" : "#003366",
+            position: 'relative', overflow: 'hidden',
+            width: '100%', background: 'var(--yolk)',
+            borderRadius: 'var(--radius)', padding: '20px 24px',
+            fontFamily: 'var(--font-fraunces)', fontSize: '20px', fontWeight: 700,
+            color: 'var(--ink)', letterSpacing: '-0.3px',
+            boxShadow: '0 6px 24px rgba(245,200,0,0.4)',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
           }}
         >
-          {!generating && (
-            <svg width="16" height="16" viewBox="0 0 53 53" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.7 20.9C24.6 17.6 30 12 33.1 5C31.1 2.9 28.5 1.4 25.7 0.5L24.2 0C24.1 0.2 24 0.500012 24 0.700012C21.6 7.50001 16.7 13 10.1 16.1C5.50001 18.3 2.1 22.3 0.5 27.1L0 28.6C0.2 28.7 0.500005 28.8 0.700005 28.8C2.6 29.5 4.5 30.4 6.3 31.5C8.8 27 12.8 23.2 17.7 20.9Z" fill="currentColor"/>
-              <path d="M46.7 21.3C43 26.9 37.9 31.4 31.6 34.4C26.5 36.8 22.6 41.3 20.8 46.7L20.3 48.4C22.2 50.1 24.5 51.4 27 52.2L28.5 52.7C28.6 52.5 28.7 52.2 28.7 52C31.1 45.2 36 39.7 42.6 36.6C47.2 34.4 50.7 30.4 52.2 25.6L52.7 24.1C50.6 23.5 48.6 22.5 46.7 21.3Z" fill="currentColor"/>
-              <path d="M16.3 43.2C18.8 37.2 23.4 32.3 29.3 29.5C34.7 26.9 39.2 22.9 42.3 18C40 15.8 38.1 13.3 36.7 10.3C33 17.1 27.2 22.6 20.1 26C16 27.9 12.7 31.2 10.7 35.2C12.9 37.3 14.7 39.9 16.1 42.8C16.1 42.8 16.2 43 16.3 43.2Z" fill="currentColor"/>
+          <span
+            style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+            }}
+            aria-hidden="true"
+          />
+          <div className="fish-bubbles">
+            <div className="bubbles">
+              <span className="bubble b1" />
+              <span className="bubble b2" />
+              <span className="bubble b3" />
+            </div>
+            <svg width="28" height="18" viewBox="0 0 80 50" fill="none">
+              <ellipse cx="38" cy="25" rx="26" ry="13" fill="currentColor"/>
+              <path d="M64 25 C72 15, 78 12, 76 25 C78 38, 72 35, 64 25Z" fill="currentColor"/>
+              <ellipse cx="20" cy="22" rx="3.5" ry="3.5" fill="#F5C800"/>
+              <ellipse cx="21" cy="21" rx="1.2" ry="1.2" fill="white"/>
+              <path d="M12 25 C8 20, 4 18, 6 25 C4 32, 8 30, 12 25Z" fill="currentColor" opacity="0.6"/>
             </svg>
-          )}
-          {generating ? "Generating..." : plan ? "Regenerate" : "Generate"}
+          </div>
+          <span style={{ position: 'relative' }}>
+            {generating ? 'Generating...' : plan ? 'Regenerate' : 'Generate session'}
+          </span>
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {/* Error message */}
+      {error && (
+        <p style={{
+          color: 'var(--coral)', padding: '0 24px 16px',
+          fontFamily: 'var(--font-dm-sans)', fontSize: '14px', margin: 0,
+        }}>
+          {error}
+        </p>
+      )}
 
+      {/* Generated plan */}
       {plan && (
-        <div className="space-y-4">
-          {generatedAt && <p className="text-xs text-emerald-600">{generatedAt}</p>}
+        <div style={{ paddingBottom: '40px' }}>
           <PlanCard title="Generated plan" request={generatedRequest ?? request} plan={plan} />
-          <button
-            type="button"
-            onClick={handleAccept}
-            disabled={accepting || generating}
-            className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium disabled:opacity-60"
-            style={{
-              backgroundColor: "#FFD700",
-              borderColor: "#FFD700",
-              color: "#003366",
-            }}
-          >
-            {!accepting && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="9" stroke="currentColor"/>
-                <path d="M8 12L11 15L16 9" stroke="currentColor"/>
-              </svg>
-            )}
-            {accepting ? "Saving..." : "Let's do it!"}
-          </button>
+          <div style={{ padding: '0 24px' }}>
+            <button
+              type="button"
+              onClick={handleAccept}
+              disabled={accepting || generating}
+              className="goby-accept-btn"
+              style={{
+                width: '100%',
+                background: 'var(--yolk)', borderRadius: 'var(--radius)',
+                padding: '20px 24px', border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--font-fraunces)', fontSize: '20px', fontWeight: 700,
+                color: 'var(--ink)', letterSpacing: '-0.3px',
+                boxShadow: '0 6px 24px rgba(245,200,0,0.4)',
+              }}
+            >
+              {accepting ? 'Saving...' : "Let's do it!"}
+            </button>
+          </div>
         </div>
       )}
     </div>

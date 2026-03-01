@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserWithRateLimitHandling } from '@/lib/supabase/auth';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { GOBY_BY_LEVEL } from '@/lib/gobies';
 
 export async function POST(request: Request) {
   const supabase = createSupabaseServerClient();
@@ -20,6 +21,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const swim_level = body.swim_level as string;
   const preferences = (body.preferences ?? {}) as Record<string, any>;
+  // Assign goby species based on swim level.
+  // NOTE: requires `goby_species text` column on the profiles table.
+  // Run: ALTER TABLE public.profiles ADD COLUMN goby_species text;
+  const goby_species = GOBY_BY_LEVEL[swim_level] ?? null;
 
   const { data, error } = await supabase
     .from('profiles')
@@ -27,7 +32,8 @@ export async function POST(request: Request) {
       {
         id: user.id,
         swim_level,
-        preferences
+        preferences,
+        goby_species,
       },
       { onConflict: 'id' }
     )

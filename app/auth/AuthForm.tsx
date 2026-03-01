@@ -67,7 +67,14 @@ export function AuthForm({ inviteToken }: AuthFormProps) {
 
       if (signUpError) {
         setStatus("error");
-        setMessage(signUpError.message);
+        const isRateLimit =
+          (signUpError as any).status === 429 ||
+          signUpError.message?.toLowerCase().includes("rate limit");
+        setMessage(
+          isRateLimit
+            ? "Supabase is rate-limiting sign-up emails right now (limit: a few per hour). Wait a minute, then ask for a fresh invite link and try again."
+            : signUpError.message,
+        );
         return;
       }
 
@@ -91,116 +98,236 @@ export function AuthForm({ inviteToken }: AuthFormProps) {
     }
   }
 
-  return (
-    <div className="space-y-6">
-      {isSignUp ? (
-        <>
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Let&apos;s get swimming</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              You&apos;ve been invitited to jump in. Set up here.
-            </p>
-          </div>
+  const waveBg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cpath d='M0 40 C25 35, 50 45, 75 40 C100 35, 125 45, 150 40 C175 35, 200 45, 200 40' stroke='%233B9EBF' stroke-width='0.6' fill='none' opacity='0.07'/%3E%3Cpath d='M0 80 C30 75, 55 85, 80 80 C110 75, 130 85, 160 80 C180 75, 200 85, 200 80' stroke='%233B9EBF' stroke-width='0.6' fill='none' opacity='0.05'/%3E%3Cpath d='M0 120 C20 115, 50 125, 80 120 C110 115, 140 125, 160 120 C180 115, 200 125, 200 120' stroke='%233B9EBF' stroke-width='0.6' fill='none' opacity='0.06'/%3E%3Cpath d='M0 160 C25 155, 60 165, 90 160 C120 155, 150 165, 175 160 C185 155, 200 165, 200 160' stroke='%233B9EBF' stroke-width='0.6' fill='none' opacity='0.04'/%3E%3C/svg%3E")`;
 
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <label className="block text-sm font-medium text-slate-200">
-              Email
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontFamily: "var(--font-dm-sans)",
+    fontSize: "12px",
+    fontWeight: 600,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    color: "rgba(61,61,82,0.5)",
+    marginBottom: "6px",
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "var(--fog)",
+    border: "1.5px solid var(--fog-dark)",
+    borderRadius: "var(--radius-sm)",
+    padding: "14px 16px",
+    fontFamily: "var(--font-dm-sans)",
+    fontSize: "15px",
+    color: "var(--ink)",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "var(--fog)",
+        backgroundImage: waveBg,
+        backgroundRepeat: "repeat",
+        backgroundSize: "200px 200px",
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          padding: "52px 24px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          animation: "fadeUp 0.4s ease both",
+        }}
+      >
+        <svg width="36" height="36" viewBox="0 0 80 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="38" cy="25" rx="26" ry="13" fill="#F5C800" />
+          <path d="M64 25 C72 15, 78 12, 76 25 C78 38, 72 35, 64 25Z" fill="#F5C800" />
+          <ellipse cx="20" cy="22" rx="3.5" ry="3.5" fill="#1A1A2A" />
+          <ellipse cx="21" cy="21" rx="1.2" ry="1.2" fill="white" />
+          <path d="M30 20 C33 18, 36 18, 38 20" stroke="#D4A900" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+          <path d="M12 25 C8 20, 4 18, 6 25 C4 32, 8 30, 12 25Z" fill="#D4A900" />
+        </svg>
+        <span
+          style={{
+            fontFamily: "var(--font-fraunces)",
+            fontSize: "26px",
+            fontWeight: 700,
+            color: "var(--ink)",
+            letterSpacing: "-0.5px",
+          }}
+        >
+          goby
+        </span>
+      </header>
+
+      {/* Content area */}
+      <div style={{ maxWidth: "390px", margin: "0 auto" }}>
+        {/* Heading + subtext — outside the card */}
+        <div style={{ animation: "fadeUp 0.4s ease 0.08s both" }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-fraunces)",
+              fontSize: "28px",
+              fontWeight: 600,
+              letterSpacing: "-0.5px",
+              color: "var(--ink)",
+              margin: 0,
+              padding: "0 24px 8px",
+            }}
+          >
+            Let&apos;s get swimming
+          </h2>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: "15px",
+              color: "rgba(61,61,82,0.6)",
+              margin: 0,
+              padding: "0 24px 20px",
+            }}
+          >
+            {isSignUp
+              ? "You've been invited to jump in. Set up here."
+              : "Sign in to your account to continue."}
+          </p>
+        </div>
+
+        {/* Form card */}
+        <div
+          style={{
+            background: "white",
+            borderRadius: "var(--radius)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            padding: "32px 24px",
+            margin: "0 24px",
+            animation: "fadeUp 0.4s ease 0.16s both",
+          }}
+        >
+          <form onSubmit={isSignUp ? handleSignUp : handleSignIn}>
+            {/* Email field */}
+            <div style={{ marginBottom: "16px" }}>
+              <label htmlFor="auth-email" style={labelStyle}>
+                Email
+              </label>
               <input
+                id="auth-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
                 placeholder="you@example.com"
+                className="auth-input"
+                style={inputStyle}
               />
-            </label>
+            </div>
 
-            <label className="block text-sm font-medium text-slate-200">
-              Password
+            {/* Password field */}
+            <div>
+              <label htmlFor="auth-password" style={labelStyle}>
+                Password
+              </label>
               <input
+                id="auth-password"
                 type="password"
                 required
-                minLength={8}
+                minLength={isSignUp ? 8 : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
-                placeholder="At least 8 characters"
+                placeholder={isSignUp ? "At least 8 characters" : "Your password"}
+                className="auth-input"
+                style={inputStyle}
               />
-            </label>
+            </div>
 
+            {/* Error / status message */}
+            {message && (
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans)",
+                  fontSize: "13px",
+                  color: status === "error" ? "var(--coral)" : "var(--ink-soft)",
+                  margin: "8px 0 0",
+                }}
+              >
+                {message}
+              </p>
+            )}
+
+            {/* Submit button */}
             <button
               type="submit"
               disabled={status === "loading" || !email || !password}
-              className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60"
+              className="auth-submit-btn"
+              style={{
+                width: "100%",
+                background: "var(--yolk)",
+                border: "none",
+                borderRadius: "var(--radius)",
+                padding: "18px 24px",
+                fontFamily: "var(--font-fraunces)",
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.3px",
+                cursor: "pointer",
+                boxShadow: "0 6px 24px rgba(245,200,0,0.4)",
+                marginTop: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+              }}
             >
               {status === "loading" ? (
-                "Starting swimming..."
-              ) : (
+                isSignUp ? "Starting swimming..." : "Signing in..."
+              ) : isSignUp ? (
                 <>
-                  <img src="/logos/Fire_light.svg" alt="" width={16} height={16} className="mr-2" />
+                  <svg width="20" height="14" viewBox="0 0 80 50" fill="none" aria-hidden="true">
+                    <ellipse cx="38" cy="25" rx="26" ry="13" fill="currentColor" />
+                    <path d="M64 25 C72 15, 78 12, 76 25 C78 38, 72 35, 64 25Z" fill="currentColor" />
+                    <ellipse cx="20" cy="22" rx="3.5" ry="3.5" fill="#F5C800" />
+                    <ellipse cx="21" cy="21" rx="1.2" ry="1.2" fill="white" />
+                    <path d="M12 25 C8 20, 4 18, 6 25 C4 32, 8 30, 12 25Z" fill="currentColor" opacity="0.6" />
+                  </svg>
                   Start swimming
                 </>
+              ) : (
+                "Sign in"
               )}
             </button>
           </form>
+        </div>
 
-          <p className="text-sm text-slate-500">
-            Already have an account?{" "}
-            <a href="/auth" className="text-sky-400 hover:text-sky-300">
-              Sign in
-            </a>
-          </p>
-        </>
-      ) : (
-        <>
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Sign in</h2>
-            <p className="mt-1 text-sm text-slate-400">
+        {/* Secondary link — outside the card */}
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: "14px",
+            textAlign: "center",
+            margin: 0,
+            padding: "20px 24px 40px",
+            animation: "fadeUp 0.4s ease 0.24s both",
+          }}
+        >
+          {isSignUp ? (
+            <>
+              <span style={{ color: "rgba(61,61,82,0.6)" }}>Already have an account? </span>
+              <a href="/auth" style={{ color: "var(--water)", fontWeight: 500, textDecoration: "none" }}>
+                Sign in
+              </a>
+            </>
+          ) : (
+            <span style={{ color: "rgba(61,61,82,0.6)" }}>
               Don&apos;t have an account? You&apos;ll need an invite link to join.
-            </p>
-          </div>
-
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <label className="block text-sm font-medium text-slate-200">
-              Email
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
-                placeholder="you@example.com"
-              />
-            </label>
-
-            <label className="block text-sm font-medium text-slate-200">
-              Password
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-500"
-                placeholder="Your password"
-              />
-            </label>
-
-            <button
-              type="submit"
-              disabled={status === "loading" || !email || !password}
-              className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60"
-            >
-              {status === "loading" ? "Signing in..." : "Sign in"}
-            </button>
-          </form>
-        </>
-      )}
-
-      {message && (
-        <p className={`text-sm ${status === "error" ? "text-red-400" : "text-slate-300"}`}>
-          {message}
+            </span>
+          )}
         </p>
-      )}
+      </div>
     </div>
   );
 }

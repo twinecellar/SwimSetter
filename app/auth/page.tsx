@@ -6,9 +6,5 @@ interface AuthPageProps {
 
 export default function AuthPage({ searchParams }: AuthPageProps) {
   const inviteToken = searchParams.invite ?? null;
-  return (
-    <div className="mx-auto max-w-md">
-      <AuthForm inviteToken={inviteToken} />
-    </div>
-  );
+  return <AuthForm inviteToken={inviteToken} />;
 }

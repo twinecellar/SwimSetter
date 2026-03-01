@@ -13,8 +13,12 @@ export default async function PlansPage() {
 
   if (rateLimited) {
     return (
-      <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
-        <p className="text-sm text-slate-300">
+      <div style={{
+        margin: '0 24px', padding: '20px 24px',
+        background: 'white', borderRadius: 'var(--radius)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      }}>
+        <p style={{ fontFamily: 'var(--font-dm-sans)', fontSize: '14px', color: 'var(--coral)', margin: 0 }}>
           Too many auth requests right now. Wait about a minute, then refresh.
         </p>
       </div>
@@ -60,55 +64,88 @@ export default async function PlansPage() {
 
   if (!typedPlans.length) {
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-slate-400">No accepted or completed sessions yet.</p>
-        <Link
-          href="/plans/generate"
-          prefetch={false}
-          className="inline-flex items-center rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"
-        >
-          Generate your first session
-        </Link>
+      <div>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', padding: '60px 24px', gap: '16px',
+        }}>
+          <svg width="40" height="25" viewBox="0 0 80 50" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.2 }}>
+            <ellipse cx="38" cy="25" rx="26" ry="13" fill="var(--ink)" />
+            <path d="M64 25 C72 15, 78 12, 76 25 C78 38, 72 35, 64 25Z" fill="var(--ink)" />
+            <ellipse cx="20" cy="22" rx="3.5" ry="3.5" fill="var(--ink)" />
+            <path d="M12 25 C8 20, 4 18, 6 25 C4 32, 8 30, 12 25Z" fill="var(--ink)" />
+          </svg>
+          <p style={{
+            fontFamily: 'var(--font-fraunces)',
+            fontStyle: 'italic', fontSize: '16px',
+            color: 'var(--ink-soft)', opacity: 0.4,
+            margin: 0, textAlign: 'center',
+          }}>
+            Your sessions will appear here
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div>
+      {/* Current session */}
       {currentPlan && (
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Current session</h3>
-          <PlanCard
-            title="Current Session"
-            request={currentPlan.request}
-            plan={currentPlan.plan}
-            status="planned"
-            actions={
-              <Link
-                href={`/plans/${currentPlan.id}/complete`}
-                prefetch={false}
-                className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
-                style={{
-                  backgroundColor: "#f59e0b",
-                  borderColor: "#f59e0b",
-                  color: "#111827",
-                }}
-              >
-                Finish
-              </Link>
-            }
-          />
-        </section>
+        <PlanCard
+          title="Current session"
+          request={currentPlan.request}
+          plan={currentPlan.plan}
+          status="planned"
+          actions={
+            <Link
+              href={`/plans/${currentPlan.id}/complete`}
+              prefetch={false}
+              style={{
+                display: 'inline-flex', alignItems: 'center',
+                background: 'var(--mint)', borderRadius: 'var(--radius-sm)',
+                padding: '10px 18px', textDecoration: 'none',
+                fontFamily: 'var(--font-dm-sans)', fontSize: '14px', fontWeight: 600,
+                color: 'white',
+              }}
+            >
+              Finish
+            </Link>
+          }
+        />
       )}
 
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">All sessions</h3>
-        {historyPlans.length > 0 ? (
-          <HistoryList plans={historyPlans} completionsByPlanId={completionsMap} />
-        ) : (
-          <p className="text-sm text-slate-400">No past sessions yet.</p>
-        )}
-      </section>
+      {historyPlans.length > 0 && (
+        <>
+          {/* Last session */}
+          <div style={{ padding: '0 24px 16px' }}>
+            <h3 style={{
+              fontFamily: 'var(--font-fraunces)',
+              fontSize: '24px', fontWeight: 600, color: 'var(--ink)',
+              margin: 0,
+            }}>
+              Last session
+            </h3>
+          </div>
+          <HistoryList plans={historyPlans.slice(0, 1)} completionsByPlanId={completionsMap} />
+
+          {/* All sessions heading + remaining */}
+          {historyPlans.length > 1 && (
+            <>
+              <div style={{ padding: '16px 24px 16px' }}>
+                <h3 style={{
+                  fontFamily: 'var(--font-fraunces)',
+                  fontSize: '24px', fontWeight: 600, color: 'var(--ink)',
+                  margin: 0,
+                }}>
+                  All sessions
+                </h3>
+              </div>
+              <HistoryList plans={historyPlans.slice(1)} completionsByPlanId={completionsMap} />
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

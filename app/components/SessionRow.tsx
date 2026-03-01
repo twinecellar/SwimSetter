@@ -1,5 +1,11 @@
 import Link from "next/link";
-import type { CompletionRow, PlanRow } from "@/lib/plan-types";
+import type { CompletionRow, Effort, PlanRow } from "@/lib/plan-types";
+
+const EFFORT_PILL: Record<Effort, { bg: string; border: string; color: string }> = {
+  easy:   { bg: 'var(--mint-light)',  border: 'var(--mint)',  color: 'var(--mint)'  },
+  medium: { bg: '#FFF5E6',            border: 'var(--coral)', color: 'var(--coral)' },
+  hard:   { bg: 'var(--coral-light)', border: 'var(--coral)', color: 'var(--coral)' },
+};
 
 interface SessionRowProps {
   plan: PlanRow;
@@ -17,69 +23,116 @@ export function SessionRow({ plan, completion }: SessionRowProps) {
     plan.plan.segments.reduce((sum, s) => sum + s.distance_m, 0) ||
     plan.plan.estimated_distance_m;
 
-  const ratingImg =
-    completion?.rating === 1
-      ? <img src="/thumb_up.png" alt="thumbs up" width={16} height={16} />
-      : completion?.rating === 0
-        ? <img src="/thumb_down.png" alt="thumbs down" width={16} height={16} />
-        : null;
+  const effort = plan.request.effort as Effort;
+  const effortPill = EFFORT_PILL[effort] ?? EFFORT_PILL.medium;
 
   const requestedTags = plan.request.requested_tags ?? [];
   const completionTags = completion?.tags ?? [];
-  const hasTags = requestedTags.length > 0 || completionTags.length > 0;
+
+  const ratingIcon =
+    completion?.rating === 1 ? (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3" />
+      </svg>
+    ) : completion?.rating === 0 ? (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17" />
+      </svg>
+    ) : null;
+
+  const showRate = completion != null && completion.rating == null;
 
   return (
     <Link
       href={`/plans/${plan.id}`}
       prefetch={false}
-      className="flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800/50 border border-slate-700/60 hover:bg-slate-800/80 hover:border-slate-600/60 transition-colors group shadow-sm"
+      className="goby-session-card"
+      style={{
+        background: 'white',
+        borderRadius: 'var(--radius)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        padding: '16px 20px',
+        margin: '0 24px 10px',
+      }}
     >
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="flex-shrink-0">
-          <p className="text-sm font-medium text-slate-100">{date}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{distance.toLocaleString()}m</p>
-        </div>
-        {hasTags && (
-          <div className="flex flex-col gap-1">
-            {requestedTags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {requestedTags.map((tag) => (
-                  <span
-                    key={`req-${tag}`}
-                    className="text-sm px-2.5 py-1 rounded bg-slate-700 text-slate-300 border border-slate-600/50"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-            {(completionTags.length > 0 || ratingImg) && (
-              <div className="flex items-center flex-wrap gap-1">
-                {ratingImg}
-                {completionTags.map((tag) => (
-                  <span
-                    key={`comp-${tag}`}
-                    className="text-sm px-2.5 py-1 rounded"
-                    style={{ backgroundColor: "rgba(0, 200, 216, 0.1)", color: "#006D7A", border: "1px solid rgba(0, 200, 216, 0.3)" }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+      {/* Row 1: date + chevron */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        alignItems: 'center', marginBottom: '8px',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
+        }}>
+          {date}
+        </span>
+        <span style={{ color: 'var(--ink-soft)', opacity: 0.3, fontSize: '20px', lineHeight: 1 }}>
+          ›
+        </span>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-        <svg
-          className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
+
+      {/* Row 2: distance + rating + effort pill + tags */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <span style={{
+          fontFamily: 'var(--font-fraunces)',
+          fontSize: '14px', fontWeight: 600,
+          color: 'var(--ink-soft)', opacity: 0.6,
+        }}>
+          {distance.toLocaleString()}m
+        </span>
+
+        {ratingIcon && (
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            {ratingIcon}
+          </span>
+        )}
+
+        {showRate && (
+          <span style={{
+            fontFamily: 'var(--font-dm-sans)',
+            fontSize: '13px', fontWeight: 500, color: 'var(--water)',
+          }}>
+            Rate
+          </span>
+        )}
+
+        <span style={{
+          border: `1.5px solid ${effortPill.border}`,
+          background: effortPill.bg,
+          borderRadius: '100px', padding: '4px 12px',
+          fontFamily: 'var(--font-dm-sans)', fontSize: '12px', fontWeight: 500,
+          color: effortPill.color, textTransform: 'capitalize',
+        }}>
+          {effort}
+        </span>
+
+        {requestedTags.slice(0, 3).map((tag) => (
+          <span
+            key={`req-${tag}`}
+            style={{
+              border: '1.5px solid var(--fog-dark)', background: 'white',
+              borderRadius: '100px', padding: '4px 12px',
+              fontFamily: 'var(--font-dm-sans)', fontSize: '12px', fontWeight: 500,
+              color: 'var(--ink-soft)', textTransform: 'capitalize',
+            }}
+          >
+            {tag}
+          </span>
+        ))}
+
+        {completionTags.slice(0, 2).map((tag) => (
+          <span
+            key={`comp-${tag}`}
+            style={{
+              border: '1.5px solid var(--water-light)', background: 'var(--water-light)',
+              borderRadius: '100px', padding: '4px 12px',
+              fontFamily: 'var(--font-dm-sans)', fontSize: '12px', fontWeight: 500,
+              color: 'var(--water)', textTransform: 'capitalize',
+            }}
+          >
+            {tag}
+          </span>
+        ))}
       </div>
     </Link>
   );

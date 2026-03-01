@@ -15,7 +15,7 @@ export function HistoryList({
   const rows = typeof limit === "number" ? plans.slice(0, limit) : plans;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div>
       {rows.map((plan) => {
         const completion = completionsByPlanId[plan.id];
         return (

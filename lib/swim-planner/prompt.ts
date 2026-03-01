@@ -532,7 +532,9 @@ export function buildUserPrompt(payload: SwimPlanInput, historySummary: string):
     '- If no SESSION OVERRIDE: varied style → main_set should contain 2-3 distinct steps with clear variation.\n' +
     '- Step descriptions must be concise: one brief sentence with the single most important coaching cue. Do not write multiple sentences.\n' +
     '- Step descriptions must use plain, everyday language. Never use technical terms — do not use words like \'phosphocreatine\', \'lactate\', \'aerobic\', \'anaerobic\', \'threshold\', \'ATP\', \'fast-twitch\', or \'energy systems\' in descriptions.\n' +
+    '- Step descriptions must not use informal or cutesy words for pace or energy — do not use words like \'peppier\', \'zippy\', \'snappy\', \'punchy\', or similar. Use direct coaching language: faster, stronger, building, controlled.\n' +
     '- Step descriptions must NOT mention specific distances or metres. Cue effort, technique, or sensation — never say "start at 100m" or "drop to 50m" in a description.\n' +
+    '- Step descriptions must NOT use "longer" or "shorter" to describe pace or effort — distance per rep is always fixed. Use "faster" or "slower" instead. "Long" and "short" are only permitted as stroke-length technique cues (e.g. "long, smooth strokes").\n' +
     '- Step descriptions must match the step\'s kind. Do not write a descending or pyramid description for an intervals or continuous step, and vice versa.\n' +
     '- Do not use physical analogies that do not apply to swimming (e.g. gravity, wind). Keep descriptions grounded in the swimmer\'s body and the water.\n' +
     '- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n' +

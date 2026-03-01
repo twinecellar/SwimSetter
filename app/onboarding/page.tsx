@@ -9,9 +9,15 @@ export default async function OnboardingPage() {
 
   if (rateLimited) {
     return (
-      <div className="mx-auto max-w-md space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
-        <h2 className="text-xl font-semibold tracking-tight">Onboarding</h2>
-        <p className="text-sm text-slate-300">
+      <div style={{
+        minHeight: '100vh', background: 'var(--fog)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '14px', color: 'var(--coral)', textAlign: 'center',
+        }}>
           Too many auth requests right now. Wait about a minute, then refresh.
         </p>
       </div>
@@ -22,9 +28,5 @@ export default async function OnboardingPage() {
     redirect("/auth");
   }
 
-  return (
-    <div className="mx-auto max-w-md">
-      <OnboardingForm />
-    </div>
-  );
+  return <OnboardingForm />;
 }

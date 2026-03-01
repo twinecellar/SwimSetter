@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { CompletionRow, Effort, PlanRow } from "@/lib/plan-types";
-import { effortPillStyle } from "@/lib/effort-colors";
 import { PlanBreakdown } from "@/app/components/PlanBreakdown";
 import { getUserWithRateLimitHandling } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const EFFORT_PILL: Record<Effort, { bg: string; border: string; color: string }> = {
+  easy:   { bg: 'var(--mint-light)',  border: 'var(--mint)',  color: 'var(--mint)'  },
+  medium: { bg: '#FFF5E6',            border: 'var(--coral)', color: 'var(--coral)' },
+  hard:   { bg: 'var(--coral-light)', border: 'var(--coral)', color: 'var(--coral)' },
+};
 
 export default async function PlanDetailPage({
   params,
@@ -16,8 +21,12 @@ export default async function PlanDetailPage({
 
   if (rateLimited) {
     return (
-      <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/40 p-4">
-        <p className="text-sm text-slate-300">
+      <div style={{
+        margin: '0 24px', padding: '20px 24px',
+        background: 'white', borderRadius: 'var(--radius)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      }}>
+        <p style={{ fontFamily: 'var(--font-dm-sans)', fontSize: '14px', color: 'var(--coral)', margin: 0 }}>
           Too many auth requests right now. Wait about a minute, then refresh.
         </p>
       </div>
@@ -61,36 +70,53 @@ export default async function PlanDetailPage({
     typedPlan.plan.segments.reduce((sum, s) => sum + s.distance_m, 0) ||
     typedPlan.plan.estimated_distance_m;
 
-  const ratingImg =
-    typedCompletion?.rating === 1
-      ? <img src="/thumb_up.png" alt="thumbs up" width={16} height={16} style={{ display: "inline-block" }} />
-      : typedCompletion?.rating === 0
-        ? <img src="/thumb_down.png" alt="thumbs down" width={16} height={16} style={{ display: "inline-block" }} />
-        : null;
+  const effort = typedPlan.request.effort as Effort;
+  const effortPill = EFFORT_PILL[effort] ?? EFFORT_PILL.medium;
+
+  const ratingIcon =
+    typedCompletion?.rating === 1 ? (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3" />
+      </svg>
+    ) : typedCompletion?.rating === 0 ? (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17" />
+      </svg>
+    ) : null;
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-start gap-3">
+    <div>
+      {/* Header: back link + date */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', gap: '12px',
+        padding: '0 24px 24px',
+      }}>
         <Link
           href="/plans"
           prefetch={false}
-          className="mt-1 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+          style={{
+            marginTop: '4px', flexShrink: 0,
+            color: 'var(--ink-soft)', opacity: 0.5, textDecoration: 'none',
+          }}
           aria-label="Back to sessions"
         >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-100">{date}</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 style={{
+            fontFamily: 'var(--font-fraunces)',
+            fontSize: '22px', fontWeight: 700, color: 'var(--ink)',
+            margin: '0 0 4px',
+          }}>
+            {date}
+          </h2>
+          <p style={{
+            fontFamily: 'var(--font-dm-sans)',
+            fontSize: '14px', color: 'var(--ink-soft)', opacity: 0.6,
+            margin: 0,
+          }}>
             {distance.toLocaleString()}m · {typedPlan.plan.duration_minutes} min
           </p>
         </div>
@@ -98,56 +124,95 @@ export default async function PlanDetailPage({
 
       {/* Session inputs */}
       {typedPlan.request && (
-        <section className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div style={{ padding: '0 24px 24px' }}>
+          <p style={{
+            fontFamily: 'var(--font-dm-sans)',
+            fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--ink-soft)', opacity: 0.5,
+            margin: '0 0 12px',
+          }}>
             Session inputs
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{
+              border: '1.5px solid var(--fog-dark)', background: 'white',
+              borderRadius: '100px', padding: '6px 14px',
+              fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
+              color: 'var(--ink-soft)',
+            }}>
               {typedPlan.request.duration_minutes} min
             </span>
-            <span
-              className="rounded-full border px-3 py-1 text-xs font-medium capitalize"
-              style={effortPillStyle(typedPlan.request.effort as Effort)}
-            >
+            <span style={{
+              border: `1.5px solid ${effortPill.border}`,
+              background: effortPill.bg,
+              borderRadius: '100px', padding: '6px 14px',
+              fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
+              color: effortPill.color, textTransform: 'capitalize',
+            }}>
               {typedPlan.request.effort}
             </span>
             {(typedPlan.request.requested_tags ?? []).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300"
+                style={{
+                  border: '1.5px solid var(--fog-dark)', background: 'white',
+                  borderRadius: '100px', padding: '6px 14px',
+                  fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
+                  color: 'var(--ink-soft)', textTransform: 'capitalize',
+                }}
               >
                 {tag}
               </span>
             ))}
           </div>
-        </section>
+        </div>
       )}
 
       {/* Plan breakdown */}
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Plan</h3>
+      <div style={{ padding: '0 24px 24px' }}>
+        <p style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em',
+          textTransform: 'uppercase', color: 'var(--ink-soft)', opacity: 0.5,
+          margin: '0 0 12px',
+        }}>
+          Plan
+        </p>
         <PlanBreakdown segments={typedPlan.plan.segments} />
-      </section>
+      </div>
 
       {/* Feedback */}
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div style={{ padding: '0 24px 24px' }}>
+        <p style={{
+          fontFamily: 'var(--font-dm-sans)',
+          fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em',
+          textTransform: 'uppercase', color: 'var(--ink-soft)', opacity: 0.5,
+          margin: '0 0 12px',
+        }}>
           Your feedback
-        </h3>
+        </p>
         {typedCompletion ? (
-          <div className="space-y-2">
-            {(ratingImg || typedCompletion.tags.length > 0) && (
-              <div className="flex flex-wrap gap-2 items-center">
-                {ratingImg && (
-                  <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1">
-                    {ratingImg}
+          <div>
+            {(ratingIcon || typedCompletion.tags.length > 0) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                {ratingIcon && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center',
+                    border: '1.5px solid var(--fog-dark)', background: 'white',
+                    borderRadius: '100px', padding: '6px 10px',
+                  }}>
+                    {ratingIcon}
                   </span>
                 )}
                 {typedCompletion.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300"
+                    style={{
+                      border: '1.5px solid var(--water-light)', background: 'var(--water-light)',
+                      borderRadius: '100px', padding: '6px 14px',
+                      fontFamily: 'var(--font-dm-sans)', fontSize: '13px', fontWeight: 500,
+                      color: 'var(--water)', textTransform: 'capitalize',
+                    }}
                   >
                     {tag}
                   </span>
@@ -155,15 +220,27 @@ export default async function PlanDetailPage({
               </div>
             )}
             {typedCompletion.notes && (
-              <p className="rounded-md border border-slate-800 bg-slate-900/50 px-3 py-2 text-sm text-slate-300">
+              <p style={{
+                background: 'white', borderRadius: 'var(--radius-sm)',
+                padding: '12px 16px',
+                fontFamily: 'var(--font-dm-sans)', fontSize: '14px',
+                color: 'var(--ink-soft)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                margin: 0,
+              }}>
                 {typedCompletion.notes}
               </p>
             )}
           </div>
         ) : (
-          <p className="text-sm text-slate-500">No feedback recorded.</p>
+          <p style={{
+            fontFamily: 'var(--font-dm-sans)', fontSize: '14px',
+            color: 'var(--ink-soft)', opacity: 0.5, margin: 0,
+          }}>
+            No feedback recorded.
+          </p>
         )}
-      </section>
+      </div>
     </div>
   );
 }
