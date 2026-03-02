@@ -8,7 +8,10 @@ export type StepKind =
   | 'descending'
   | 'ascending'
   | 'build'
-  | 'negative_split';
+  | 'negative_split'
+  | 'broken'
+  | 'fartlek'
+  | 'time_trial';
 export type Stroke =
   | 'freestyle'
   | 'backstroke'
@@ -52,9 +55,18 @@ export interface StepDraft {
   pyramid_sequence_m?: number[] | null;
   stroke?: string | null;
   rest_seconds?: number | null;
+  sendoff_seconds?: number | null;
+  rest_sequence_s?: number[] | null;
+  sendoff_sequence_s?: number[] | null;
   effort?: string | null;
   description?: string | null;
   hypoxic?: boolean | null;
+  underwater?: boolean | null;
+  fins?: boolean | null;
+  pull?: boolean | null;
+  paddles?: boolean | null;
+  broken_pause_s?: number | null;
+  target_time_s?: number | null;
   split_instruction?: string | null;
 }
 
@@ -86,9 +98,18 @@ export interface Step {
   pyramid_sequence_m?: number[];
   stroke: Stroke;
   rest_seconds: number | null;
+  sendoff_seconds?: number | null;
+  rest_sequence_s?: number[];
+  sendoff_sequence_s?: number[];
   effort: Effort;
   description: string;
   hypoxic?: boolean;
+  underwater?: boolean;
+  fins?: boolean;
+  pull?: boolean;
+  paddles?: boolean;
+  broken_pause_s?: number;
+  target_time_s?: number;
   split_instruction?: string;
 }
 

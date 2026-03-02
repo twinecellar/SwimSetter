@@ -14,6 +14,13 @@ export const REQUESTED_TAG_OPTIONS = [
   "freestyle",
   "mixed",
   "kick",
+  "fins",
+  "pull",
+  "paddles",
+  "golf",
+  "broken",
+  "fartlek",
+  "time_trial",
 ] as const;
 
 const REQUESTED_TAG_SET = new Set<string>(REQUESTED_TAG_OPTIONS);

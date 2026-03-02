@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          'requested_tags must only include: technique, speed, endurance, recovery, fun, steady, freestyle, mixed'
+          'requested_tags must only include: technique, speed, endurance, recovery, fun, steady, freestyle, mixed, kick, fins, pull, paddles, golf, broken, fartlek, time_trial'
       },
       { status: 400 }
     );
@@ -189,7 +189,12 @@ export async function POST(request: Request) {
     requested_tags: [],
   };
 
-  function segmentDistanceM(step: { reps: number; distance_per_rep_m: number }) {
+  const PYRAMID_KINDS = new Set(['pyramid', 'descending', 'ascending']);
+
+  function segmentDistanceM(step: { kind?: string; reps: number; distance_per_rep_m: number; pyramid_sequence_m?: number[] | null }) {
+    if (step.kind && PYRAMID_KINDS.has(step.kind) && step.pyramid_sequence_m?.length) {
+      return step.pyramid_sequence_m.reduce((sum, d) => sum + d, 0);
+    }
     return step.reps * step.distance_per_rep_m;
   }
 
@@ -197,22 +202,67 @@ export async function POST(request: Request) {
     kind: string;
     reps: number;
     distance_per_rep_m: number;
+    pyramid_sequence_m?: number[] | null;
     stroke: string;
     effort: string;
     rest_seconds: number | null;
+    sendoff_seconds?: number | null;
+    rest_sequence_s?: number[] | null;
+    sendoff_sequence_s?: number[] | null;
+    fins?: boolean | null;
+    underwater?: boolean | null;
+    pull?: boolean | null;
+    paddles?: boolean | null;
+    broken_pause_s?: number | null;
+    target_time_s?: number | null;
     description: string;
   }): string {
-    const distance = segmentDistanceM(step);
-    const base =
-      step.kind === 'continuous'
-        ? `${distance}m ${step.stroke} ${step.effort}`
-        : `${step.reps} x ${step.distance_per_rep_m}m ${step.stroke} ${step.effort}`;
-    const withRest =
-      step.kind === 'intervals' && step.rest_seconds !== null
-        ? `${base} @ ${step.rest_seconds}s rest`
-        : base;
+    let base: string;
+    if (step.kind === 'continuous') {
+      base = `${segmentDistanceM(step)}m ${step.stroke} ${step.effort}`;
+    } else if (PYRAMID_KINDS.has(step.kind) && step.pyramid_sequence_m?.length) {
+      const seq = step.pyramid_sequence_m.join('-');
+      base = `${step.kind} [${seq}]m ${step.stroke} ${step.effort}`;
+    } else if (step.kind === 'broken') {
+      const pause = step.broken_pause_s != null ? `${step.broken_pause_s}s pause` : 'pause';
+      base = step.reps === 1
+        ? `${step.distance_per_rep_m}m broken (${pause}) ${step.stroke} ${step.effort}`
+        : `${step.reps} x ${step.distance_per_rep_m}m broken (${pause}) ${step.stroke} ${step.effort}`;
+    } else if (step.kind === 'fartlek') {
+      base = `${step.distance_per_rep_m}m fartlek ${step.stroke} ${step.effort}`;
+    } else if (step.kind === 'time_trial') {
+      const target = step.target_time_s != null
+        ? ` (target ${Math.floor(step.target_time_s / 60)}:${String(step.target_time_s % 60).padStart(2, '0')})`
+        : '';
+      base = `${step.distance_per_rep_m}m time trial ${step.stroke}${target}`;
+    } else {
+      base = `${step.reps} x ${step.distance_per_rep_m}m ${step.stroke} ${step.effort}`;
+    }
+    let timing = '';
+    if (step.sendoff_sequence_s?.length) {
+      const parts = step.sendoff_sequence_s.map((v) => {
+        const m = Math.floor(v / 60);
+        const s = v % 60;
+        return `${m}:${String(s).padStart(2, '0')}`;
+      });
+      timing = ` @ [${parts.join('-')}]`;
+    } else if (step.rest_sequence_s?.length) {
+      timing = ` @ [${step.rest_sequence_s.join('-')}]s rest`;
+    } else if (step.sendoff_seconds != null) {
+      const m = Math.floor(step.sendoff_seconds / 60);
+      const s = step.sendoff_seconds % 60;
+      timing = ` @ ${m}:${String(s).padStart(2, '0')}`;
+    } else if (step.rest_seconds != null) {
+      timing = ` @ ${step.rest_seconds}s rest`;
+    }
+    const badges: string[] = [];
+    if (step.pull) badges.push('pull');
+    if (step.paddles) badges.push('paddles');
+    if (step.fins) badges.push('fins');
+    if (step.underwater) badges.push('underwater');
+    const badgeStr = badges.length ? ` [${badges.join(', ')}]` : '';
     const desc = (step.description ?? '').trim();
-    return desc ? `${withRest} - ${desc}` : withRest;
+    return desc ? `${base}${timing}${badgeStr} - ${desc}` : `${base}${timing}${badgeStr}`;
   }
 
   try {
@@ -232,6 +282,7 @@ export async function POST(request: Request) {
           effort: step.effort,
           repeats: step.reps,
           rest_seconds: step.rest_seconds ?? undefined,
+          sendoff_seconds: step.sendoff_seconds ?? undefined,
         });
       }
     }

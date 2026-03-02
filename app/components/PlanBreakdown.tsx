@@ -21,6 +21,13 @@ function formatRest(seconds: number | undefined): string | null {
   return s === 0 ? `${m}m rest` : `${m}:${String(s).padStart(2, "0")} rest`;
 }
 
+function formatSendoff(seconds: number | undefined): string | null {
+  if (!seconds || seconds <= 0) return null;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `@ ${m}:${String(s).padStart(2, "0")}`;
+}
+
 function parseDescription(description: string): { title: string; cue: string | null } {
   const idx = description.indexOf(" - ");
   if (idx === -1) return { title: description, cue: null };
@@ -29,7 +36,7 @@ function parseDescription(description: string): { title: string; cue: string | n
 
 function SegmentRow({ segment, isLast }: { segment: PlanSegment; isLast: boolean }) {
   const borderColor = EFFORT_LEFT_BORDER[segment.effort as Effort] ?? "var(--fog-dark)";
-  const rest = formatRest(segment.rest_seconds);
+  const rest = formatSendoff(segment.sendoff_seconds) ?? formatRest(segment.rest_seconds);
   const { title, cue } = parseDescription(segment.description);
 
   return (

@@ -17,6 +17,7 @@ export interface PlanSegment {
   effort: Effort;
   repeats?: number;
   rest_seconds?: number;
+  sendoff_seconds?: number;
 }
 
 export interface GeneratedPlan {

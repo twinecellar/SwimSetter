@@ -10,12 +10,16 @@ from .models import HistoricSession, SwimPlanInput
 from .style_inference import infer_prefer_varied_from_payload
 
 SYSTEM_PROMPT = (
-    "You are an expert swimming coach with deep knowledge of energy systems, periodization, "
-    "and effective swim session design. Your plans follow sound coaching principles: "
+    "You are an expert and fun swimming coach with deep knowledge of energy systems, periodization, "
+    "and effective swim session design. You know how to make people enjoy swimming. "
+    "People enjoy your sessions and want to do more of them. "
+    "Your plans follow sound coaching principles: "
     "progressive warm-ups that prime the body for work, main sets matched to the target energy "
     "system, and genuine cool-downs that aid recovery and lactate clearance. "
     "You must return valid JSON matching the provided schema exactly. "
-    "Do not include markdown, comments, explanations, or extra keys."
+    "Do not include markdown, comments, explanations, or extra keys. "
+    "Sessions should feel engaging and varied — use pyramids, builds, descending sets, and mixed "
+    "formats where appropriate to keep the swimmer interested and motivated."
 )
 
 
@@ -57,7 +61,7 @@ def _schema_excerpt() -> str:
         "plan_id": "uuid",
         "created_at": "ISO-8601 datetime",
         "duration_minutes": 20,
-        "estimated_distance_m": 700,
+        "estimated_distance_m": 1150,
         "sections": {
             "warm_up": {
                 "title": "Warm-up",
@@ -77,18 +81,37 @@ def _schema_excerpt() -> str:
             },
             "main_set": {
                 "title": "Main Set",
-                "section_distance_m": 400,
+                "section_distance_m": 850,
                 "steps": [
                     {
                         "step_id": "main-1",
                         "kind": "intervals",
-                        "reps": 8,
-                        "distance_per_rep_m": 50,
+                        "reps": 4,
+                        "distance_per_rep_m": 100,
                         "stroke": "freestyle",
-                        "rest_seconds": 20,
+                        "rest_seconds": None,
+                        "sendoff_seconds": 120,
                         "effort": "hard",
-                        "description": "Hold a strong, controlled pace across all repeats.",
-                    }
+                        "description": "Hold a strong controlled pace off the 2-minute clock — earn your rest by swimming faster.",
+                        "underwater": False,
+                        "pull": False,
+                        "paddles": False,
+                        "broken_pause_s": None,
+                        "target_time_s": None,
+                    },
+                    {
+                        "step_id": "main-2",
+                        "kind": "pyramid",
+                        "reps": 5,
+                        "distance_per_rep_m": 50,
+                        "pyramid_sequence_m": [50, 100, 150, 100, 50],
+                        "stroke": "freestyle",
+                        "rest_seconds": None,
+                        "rest_sequence_s": [10, 15, 20, 15, 10],
+                        "effort": "medium",
+                        "description": "Build up and back down — push harder on each rep, then hold your pace on the way back.",
+                        "hypoxic": False,
+                    },
                 ],
             },
             "cool_down": {
@@ -258,15 +281,18 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "Aim for variety across different movement patterns (kick, pull, catch, rotation)."
         ),
         "speed": (
-            "Short, fast repeats at near-maximal effort with full recovery (30-60s rest) so quality is maintained "
-            "across all reps. Use 50m repeats; 6-12 reps is typical. Descriptions should cue explosive starts, "
-            "high stroke rate, and a strong finish."
+            "Short, fast repeats at near-maximal effort. Use sendoff_seconds for clock-based intervals "
+            "(e.g. 6×50m on 1:30 → sendoff_seconds: 90) so the swimmer earns rest by swimming faster. "
+            "A descending sendoff (e.g. 100m on 2:00 → 50m on 1:00) is ideal for building into peak speed. "
+            "6-12 reps of 50-100m is typical. Descriptions should cue explosive starts, high stroke rate, and a strong finish. "
+            "Set rest_seconds to null when using sendoff_seconds."
         ),
         "endurance": (
             "Longer steady repeats or sustained continuous swimming with short rest (10-20s). "
             "Effort stays controlled and comfortable throughout. "
             "Descriptions should emphasise rhythm, controlled breathing, and maintaining "
-            "good form."
+            "good form. "
+            "A pyramid (e.g. 100, 150, 200, 150, 100) is an effective endurance structure — consider it for variety."
         ),
         "recovery": (
             "Active recovery session. Keep everything easy and predictable. "
@@ -274,15 +300,22 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "changes (45-60s). Target the low end of the distance range. No intensity spikes."
         ),
         "fun": (
-            "Create an engaging, varied session. Mix distances, formats, strokes, or drill "
-            "types across steps to keep interest high — e.g. a kick set followed by fist "
-            "drill followed by a build swim. Descriptions should be encouraging and "
-            "specific about what the swimmer is doing and why."
+            "Make this session feel like play, not training. "
+            "The main set MUST contain at least two steps with different formats — "
+            "e.g. a pyramid followed by a build, a descending set followed by intervals, or any other combination. "
+            "Include at least one structurally unusual step: a pyramid, descending set, negative split, build, clock-based intervals using sendoff_seconds, or an underwater step. "
+            "For clock-based steps, use sendoff_seconds (e.g. sendoff_seconds: 120 for 100m on 2:00) and set rest_seconds to null. "
+            "For an underwater element, choose one of: "
+            "(a) a dedicated step with underwater: true on 4-6×50m with rest_seconds >= 40 — swimmer holds their breath for the full 50m; or "
+            "(b) add an underwater finish cue to the description of any interval step — e.g. 'hold your breath and drive underwater into the wall on the last 10m each rep'. "
+            "Mix strokes across steps where possible. "
+            "Step descriptions should be warm, encouraging, and specific — never clinical, never race-like. "
+            "Avoid anything that sounds like a test or a time trial."
         ),
         "steady": (
             "Aerobic threshold pace. All reps at the same controlled, repeatable effort with "
-            "consistent rest. Avoid pyramids, descending rest, or mixed pacing. Descriptions "
-            "should emphasise holding a steady tempo."
+            "consistent rest. Avoid mixed pacing. Descriptions should emphasise holding a steady tempo. "
+            "Note: ascending sets with consistent rest are compatible with steady effort if pace is even throughout."
         ),
         "short": "Efficient structure. Minimise transition steps. Prioritise quality over quantity.",
         "hard": (
@@ -303,10 +336,60 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "Place it as the first main_set step, followed by the primary work. "
             "Descriptions should cue tight flutter kick from the hips, limited knee bend, and relaxed ankles."
         ),
+        "fins": (
+            "Include at least one fins step — mark it with fins: true. "
+            "Fins steps can appear in any section but should anchor the main_set. "
+            "Choose from these fins formats based on session effort: "
+            "(a) Kick with fins — kickboard or streamline kick; "
+            "(b) Sprint with fins — full stroke at higher speed; "
+            "(c) Endurance with fins — longer sustained swim, focus on maintaining rhythm and body position; "
+            "(d) Underwater with fins — combine fins: true with underwater: true for dolphin-kick lengths. "
+            "Descriptions must mention fins and cue the key mechanic for that format. "
+            "Do not add fins: true to warm-up or cool-down unless the session is fins-focused throughout."
+        ),
         "pull": (
-            "Include a pull-focused step (pull buoy, no kick) in the main_set to emphasise "
-            "catch and upper-body engagement. Good for isolating the pull phase and building "
-            "feel for the water."
+            "Include at least one pull-buoy step — mark it with pull: true. "
+            "Pull buoy isolates the upper body (no kick). "
+            "Use for sustained freestyle intervals or continuous swims to build catch and upper-body strength. "
+            "Descriptions must mention the pull buoy and cue high-elbow catch or full extension on entry. "
+            "pull: true may only appear when 'pull' is in requested_tags."
+        ),
+        "paddles": (
+            "Include at least one paddles step — mark it with paddles: true. "
+            "Paddles increase resistance and develop power in the pull phase. "
+            "Paddles can be used alone (with kick) or combined with pull: true (paddles + pull buoy, no kick). "
+            "Use for medium-to-hard intervals or sustained swims. "
+            "Descriptions must mention paddles and cue strong catch, high elbow, or full extension. "
+            "paddles: true may only appear when 'paddles' is in requested_tags."
+        ),
+        "golf": (
+            "Build the main set as a GOLF set. "
+            "Each rep: swim 50m and count your strokes for that length. "
+            "GOLF score = stroke count + seconds for that length. Aim to lower your score on each rep. "
+            "Use 6-10 × 50m intervals with 20-30s rest. Kind must be 'intervals'. "
+            "The description must explain the GOLF scoring mechanic so the swimmer knows how to play."
+        ),
+        "broken": (
+            "Include at least one broken swim step using kind: 'broken'. "
+            "A broken swim pauses at the halfway point of each rep for a short rest, then continues. "
+            "Set broken_pause_s to the pause duration in seconds (typically 10-20s). "
+            "Broken swims let the swimmer target a faster overall time than they could swim continuously. "
+            "Use 200-400m per rep. Description should tell the swimmer to pause at the wall and note their split time. "
+            "Use rest_seconds for rest between reps."
+        ),
+        "fartlek": (
+            "Include at least one fartlek step using kind: 'fartlek'. "
+            "A fartlek is a single continuous swim with repeating effort surges — "
+            "e.g. sprint hard for one length, easy for three lengths, repeat throughout. "
+            "reps must be 1; set distance_per_rep_m to the total distance (typically 400-800m). "
+            "Description must describe the surge pattern clearly: how many lengths to surge, how many to recover."
+        ),
+        "time_trial": (
+            "Include at least one time trial step using kind: 'time_trial'. "
+            "A time trial is a single all-out effort over a fixed distance — no clock constraint, swimmer just goes. "
+            "reps must be 1. Do not set rest_seconds or sendoff_seconds. "
+            "Optionally set target_time_s to give the swimmer a benchmark to chase (in seconds). "
+            "Typical distances: 100-400m. Description should cue the swimmer to go all-out and note their time."
         ),
         "threshold": (
             "Firm, comfortably hard effort the swimmer can just sustain. Use 200-400m repeats "
@@ -317,6 +400,12 @@ def _requested_tag_hints(requested_tags: list[str]) -> str:
             "Maximum effort short repeats (50m). Full recovery between each (45-90s). "
             "Focus on explosive power and peak speed. 6-10 reps is typical. Describe "
             "drive off the wall and maintaining stroke rate to the flags."
+        ),
+        "hypoxic": (
+            "Include 1-2 hypoxic steps in the main set. Mark these with hypoxic: true. "
+            "Reduce breathing frequency (every 5, 7, or 9 strokes) or hold breath for a full length. "
+            "Use short distances (50m per rep) and generous rest (30-45s). "
+            "Descriptions must clearly state the breathing pattern. Never use hypoxic on warm-up or cool-down steps."
         ),
     }
 
@@ -417,11 +506,42 @@ def _session_type_override(requested_tags: list[str], effort: str) -> str:
     )
 
 
+def _swim_level_hint(level: str) -> str:
+    hints_map = {
+        "beginner": (
+            "This swimmer is new to structured swim training. "
+            "Use simple, familiar formats only — continuous swims and straightforward intervals. "
+            "No pyramids, descending sets, or multi-step main sets. "
+            "Keep rest generous (30-45s between intervals). "
+            "Step descriptions must be especially clear and encouraging — avoid any assumed knowledge. "
+            "Favour shorter rep distances (50-100m per rep). "
+            "Do not use drill names without explaining them briefly in the description."
+        ),
+        "intermediate": (
+            "This swimmer understands basic interval formats and rest-based sets. "
+            "Standard interval structures, continuous swims, and simple pyramids are all appropriate. "
+            "Rest can be moderate (15-30s). "
+            "Step descriptions can assume basic swim literacy (e.g. the swimmer knows what a pull buoy is). "
+            "Avoid highly technical drill circuits unless the technique tag is requested."
+        ),
+        "advanced": (
+            "This swimmer is comfortable with interval training, understands pace and effort, "
+            "and can follow complex set structures. "
+            "Pyramids, descending sets, ascending sets, negative splits, and drill circuits are all appropriate. "
+            "Rest periods can be shorter (10-20s for hard efforts). "
+            "Step descriptions can be concise and technically precise. "
+            "Challenge the swimmer — do not over-simplify."
+        ),
+    }
+    return hints_map.get(level, "")
+
+
 def _style_hint(prefer_varied: bool) -> str:
     if prefer_varied:
         return (
-            "Inferred preferred style is varied. Build a main set with 2-3 distinct steps "
-            "while preserving schema consistency."
+            "Inferred preferred style is varied. Build a main set with 2-3 distinct steps using different formats — "
+            "consider pyramids, descending sets, builds, or negative splits alongside standard intervals. "
+            "Preserve schema consistency."
         )
     return "Inferred preferred style is straightforward. Keep the main set to one clear pattern."
 
@@ -443,6 +563,15 @@ def build_user_prompt(
     section_proportions = _section_proportion_guidance(effort, duration)
     session_override = _session_type_override(requested_tags, effort)
     inferred_style = "varied" if prefer_varied else "straightforward"
+
+    swim_level = getattr(payload.session_requested, "swim_level", None)
+    swim_level_block = (
+        f"SWIM LEVEL:\n"
+        f"The swimmer's level is '{swim_level}'.\n"
+        f"{_swim_level_hint(swim_level)}\n\n"
+        if swim_level
+        else ""
+    )
 
     override_block = (
         f"SESSION OVERRIDE (takes precedence over EFFORT GUIDANCE for main_set structure):\n"
@@ -472,6 +601,7 @@ def build_user_prompt(
         "7. Apply remaining requested tags where compatible.\n\n"
         "REQUEST:\n"
         f"{json.dumps(payload.session_requested.model_dump(), sort_keys=True)}\n\n"
+        f"{swim_level_block}"
         f"{override_block}"
         "INFERRED STYLE:\n"
         f"{inferred_style}\n\n"
@@ -507,7 +637,47 @@ def build_user_prompt(
         "- warm_up and cool_down must each contain at most 2 steps.\n"
         "- distance_per_rep_m must be >= 50.\n"
         "- rest_seconds must be null or >= 0.\n"
-        "- Allowed kind values: continuous, intervals.\n"
+        "- sendoff_seconds: total time window per rep in seconds (swim + rest). Use for clock-based intervals "
+        "(e.g. 5×100m on 2:00 → sendoff_seconds: 120). sendoff_seconds must be >= 1 if present.\n"
+        "- Use either rest_seconds or sendoff_seconds on a step, not both. Set the unused one to null.\n"
+        "- rest_sequence_s: optional array of per-rep rest durations (seconds) for pyramid/descending/ascending steps. "
+        "Length must equal pyramid_sequence_m.length. Values must be >= 0. "
+        "Use instead of rest_seconds when rest varies per rep (e.g. more rest on longer reps). Set rest_seconds to null.\n"
+        "- sendoff_sequence_s: optional array of per-rep sendoff durations (seconds) for pyramid/descending/ascending steps. "
+        "Length must equal pyramid_sequence_m.length. Values must be >= 1. "
+        "Use instead of sendoff_seconds when the clock target varies per rep. Set sendoff_seconds to null.\n"
+        "- rest_sequence_s and sendoff_sequence_s are mutually exclusive with each other and with rest_seconds/sendoff_seconds.\n"
+        "- Allowed kind values: continuous, intervals, pyramid, descending, ascending, build, negative_split, broken, fartlek, time_trial.\n"
+        "- broken: a swim paused at the halfway point. Must have broken_pause_s >= 5. "
+        "reps may be >= 1. Use rest_seconds for rest between reps (if multiple reps). "
+        "Description must tell the swimmer to pause at the wall at the halfway point.\n"
+        "- fartlek: a single continuous swim with repeating effort surges. Must have reps: 1. "
+        "Description must describe the surge pattern (e.g. hard 1 length, easy 3 lengths, repeat).\n"
+        "- time_trial: a single all-out effort. Must have reps: 1. Do not set rest_seconds or sendoff_seconds. "
+        "target_time_s is optional (seconds); omit if no benchmark is available.\n"
+        "- When kind is pyramid, descending, or ascending: pyramid_sequence_m must be present as an array of distances.\n"
+        "- Every value in pyramid_sequence_m must be a multiple of 50 and >= 50.\n"
+        "- reps must equal pyramid_sequence_m.length for pyramid/descending/ascending steps.\n"
+        "- The sum of pyramid_sequence_m equals the step's distance contribution to section_distance_m.\n"
+        "- Set distance_per_rep_m to 50 as a placeholder for pyramid/descending/ascending steps.\n"
+        "- When kind is build: single rep that increases effort within the rep; use reps: 1.\n"
+        "- When kind is negative_split: include a split_instruction string field on the step.\n"
+        "- hypoxic: true is only permitted on main_set steps.\n"
+        "- hypoxic: true steps must have rest_seconds >= 20.\n"
+        "- underwater: true marks a step as a full breath-hold rep (swim the entire rep without surfacing). "
+        "Only permitted on main_set steps. Must use rest_seconds >= 30. Never use sendoff_seconds on underwater steps. "
+        "Use short reps (50m). Description must tell the swimmer to hold their breath for the full rep.\n"
+        "- To cue an underwater finish (last 10m only), add it to the description text of any main_set step — "
+        "do not set underwater: true for this; instead write e.g. 'hold your breath and drive underwater into the wall on the last 10m each rep'.\n"
+        "- fins: true marks a step done wearing swim fins. Can appear in any section. "
+        "Descriptions must mention fins and the specific mechanic (kick, sprint, endurance, or underwater with fins). "
+        "fins: true may only be set when 'fins' is in requested_tags. Do not use fins: true otherwise.\n"
+        "- pull: true marks a step done with a pull buoy (no kick). Can appear in any section. "
+        "Descriptions must mention the pull buoy. "
+        "pull: true may only be set when 'pull' is in requested_tags. Do not use pull: true otherwise.\n"
+        "- paddles: true marks a step done wearing hand paddles. Can appear in any section. "
+        "Descriptions must mention paddles. Paddles may be combined with pull: true for a paddles + pull buoy set. "
+        "paddles: true may only be set when 'paddles' is in requested_tags. Do not use paddles: true otherwise.\n"
         "- Allowed stroke values: freestyle, backstroke, breaststroke, butterfly, mixed, choice.\n"
         "- Allowed effort values: easy, medium, hard.\n"
         "- All warm_up steps must use effort: easy.\n"
@@ -519,8 +689,12 @@ def build_user_prompt(
         "- Step descriptions must be concise: one brief sentence with the single most important coaching cue. Do not write multiple sentences.\n"
         "- Step descriptions must use plain, everyday language. Never use technical terms — do not use words like 'phosphocreatine', 'lactate', 'aerobic', 'anaerobic', 'threshold', 'ATP', 'fast-twitch', or 'energy systems' in descriptions.\n"
         "- Step descriptions must not use informal or cutesy words for pace or energy — do not use words like 'peppier', 'zippy', 'snappy', 'punchy', or similar. Use direct coaching language: faster, stronger, building, controlled.\n"
-        "- Step descriptions must NOT mention specific distances or metres. Cue effort, technique, or sensation — never say 'start at 100m' or 'drop to 50m' in a description.\n"
-        "- Step descriptions must NOT use 'longer' or 'shorter' to describe pace or effort — distance per rep is always fixed. Use 'faster' or 'slower' instead. 'Long' and 'short' are only permitted as stroke-length technique cues (e.g. 'long, smooth strokes').\n"
+        "- Step descriptions must never reference distances, metres, or rep lengths — this applies even to pyramid, descending, and ascending steps where distances do vary. "
+        'Banned phrases include: "reducing distance", "as repeats get shorter", "as the distance shrinks", "distances decrease", "distances increase", "drop to 50m", "start at 100m", "shorter reps", "longer reps". '
+        "The swimmer does not need to know the structure — cue only effort and body sensation: push harder on each rep, accelerate through the set, hold your pace, build to a strong finish.\n"
+        "- 'Long' and 'short' are only permitted as stroke-length technique cues (e.g. 'long, smooth strokes'). Do not use them to describe rep length or set structure.\n"
+        "- Step descriptions must match the step's kind. Do not write a descending or pyramid description for an intervals or continuous step, and vice versa.\n"
+        "- Do not use physical analogies that do not apply to swimming (e.g. gravity, wind). Keep descriptions grounded in the swimmer's body and the water.\n"
         "- If disliked history suggests pace-too-fast, long, or tiring, avoid long hard continuous main sets over 500m.\n"
         "- For hard effort without a SESSION OVERRIDE, increase intensity using interval density or shorter rest, not excessive distance.\n"
         "- For hard sessions, warm_up must include a short activation piece before the main set.\n"

@@ -27,13 +27,24 @@ export interface SwimPlannerPayload {
 
 export interface SwimPlannerStep {
   step_id: string;
-  kind: 'continuous' | 'intervals';
+  kind: 'continuous' | 'intervals' | 'pyramid' | 'descending' | 'ascending' | 'build' | 'negative_split' | 'broken' | 'fartlek' | 'time_trial';
   reps: number;
   distance_per_rep_m: number;
+  pyramid_sequence_m?: number[] | null;
   stroke: string;
   rest_seconds: number | null;
+  sendoff_seconds?: number | null;
+  rest_sequence_s?: number[] | null;
+  sendoff_sequence_s?: number[] | null;
   effort: 'easy' | 'medium' | 'hard';
   description: string;
+  hypoxic?: boolean | null;
+  underwater?: boolean | null;
+  fins?: boolean | null;
+  pull?: boolean | null;
+  paddles?: boolean | null;
+  broken_pause_s?: number | null;
+  target_time_s?: number | null;
 }
 
 export interface SwimPlannerSection {

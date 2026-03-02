@@ -8,7 +8,21 @@ from pydantic import BaseModel, ConfigDict, Field
 
 Effort = Literal["easy", "medium", "hard"]
 Stroke = Literal["freestyle", "backstroke", "breaststroke", "butterfly", "mixed", "choice"]
-StepKind = Literal["continuous", "intervals"]
+StepKind = Literal[
+    "continuous",
+    "intervals",
+    "pyramid",
+    "descending",
+    "ascending",
+    "build",
+    "negative_split",
+    "broken",
+    "fartlek",
+    "time_trial",
+]
+SwimLevel = Literal["beginner", "intermediate", "advanced"]
+
+PYRAMID_KINDS: frozenset[str] = frozenset({"pyramid", "descending", "ascending"})
 
 
 class SessionRequested(BaseModel):
@@ -17,6 +31,7 @@ class SessionRequested(BaseModel):
     duration_minutes: int = Field(gt=0)
     effort: Effort
     requested_tags: list[str] = Field(default_factory=list)
+    swim_level: Optional[SwimLevel] = None
 
 
 class Step(BaseModel):
@@ -26,13 +41,27 @@ class Step(BaseModel):
     kind: StepKind
     reps: int = Field(gt=0)
     distance_per_rep_m: int = Field(gt=0)
+    pyramid_sequence_m: Optional[list[int]] = None
     stroke: Stroke
     rest_seconds: Optional[int] = Field(default=None, ge=0)
+    sendoff_seconds: Optional[int] = Field(default=None, ge=1)
+    rest_sequence_s: Optional[list[int]] = None
+    sendoff_sequence_s: Optional[list[int]] = None
     effort: Effort
     description: str = Field(min_length=1)
+    hypoxic: Optional[bool] = None
+    underwater: Optional[bool] = None
+    fins: Optional[bool] = None
+    pull: Optional[bool] = None
+    paddles: Optional[bool] = None
+    broken_pause_s: Optional[int] = None
+    target_time_s: Optional[int] = None
+    split_instruction: Optional[str] = None
 
     @property
     def step_distance_m(self) -> int:
+        if self.kind in PYRAMID_KINDS and self.pyramid_sequence_m:
+            return sum(self.pyramid_sequence_m)
         return self.reps * self.distance_per_rep_m
 
 
@@ -85,10 +114,22 @@ class LLMPlanDraftStep(BaseModel):
     kind: StepKind
     reps: int = Field(gt=0)
     distance_per_rep_m: int = Field(gt=0)
+    pyramid_sequence_m: Optional[list[int]] = None
     stroke: Stroke
     rest_seconds: Optional[int] = Field(default=None, ge=0)
+    sendoff_seconds: Optional[int] = Field(default=None, ge=1)
+    rest_sequence_s: Optional[list[int]] = None
+    sendoff_sequence_s: Optional[list[int]] = None
     effort: Effort
     description: str = ""
+    hypoxic: Optional[bool] = None
+    underwater: Optional[bool] = None
+    fins: Optional[bool] = None
+    pull: Optional[bool] = None
+    paddles: Optional[bool] = None
+    broken_pause_s: Optional[int] = None
+    target_time_s: Optional[int] = None
+    split_instruction: Optional[str] = None
 
 
 class LLMPlanDraftSection(BaseModel):

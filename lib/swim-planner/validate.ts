@@ -29,6 +29,9 @@ const ALLOWED_KINDS = new Set<string>([
   'ascending',
   'build',
   'negative_split',
+  'broken',
+  'fartlek',
+  'time_trial',
 ]);
 const PYRAMID_KINDS = new Set<string>(['pyramid', 'descending', 'ascending']);
 const ALLOWED_STROKES = new Set<string>([
@@ -59,14 +62,39 @@ function convertSteps(rawSteps: unknown[] | null | undefined, prefix: string, de
       distance_per_rep_m: s?.distance_per_rep_m,
       stroke: s?.stroke as Stroke,
       rest_seconds: s?.rest_seconds ?? null,
+      sendoff_seconds: s?.sendoff_seconds ?? null,
       effort: s?.effort as Effort,
       description,
     };
     if (Array.isArray(s?.pyramid_sequence_m)) {
       step.pyramid_sequence_m = s.pyramid_sequence_m;
     }
+    if (Array.isArray(s?.rest_sequence_s)) {
+      step.rest_sequence_s = s.rest_sequence_s;
+    }
+    if (Array.isArray(s?.sendoff_sequence_s)) {
+      step.sendoff_sequence_s = s.sendoff_sequence_s;
+    }
     if (typeof s?.hypoxic === 'boolean') {
       step.hypoxic = s.hypoxic;
+    }
+    if (typeof s?.underwater === 'boolean') {
+      step.underwater = s.underwater;
+    }
+    if (typeof s?.fins === 'boolean') {
+      step.fins = s.fins;
+    }
+    if (typeof s?.pull === 'boolean') {
+      step.pull = s.pull;
+    }
+    if (typeof s?.paddles === 'boolean') {
+      step.paddles = s.paddles;
+    }
+    if (typeof s?.broken_pause_s === 'number') {
+      step.broken_pause_s = s.broken_pause_s;
+    }
+    if (typeof s?.target_time_s === 'number') {
+      step.target_time_s = s.target_time_s;
     }
     if (typeof s?.split_instruction === 'string' && s.split_instruction.trim()) {
       step.split_instruction = s.split_instruction.trim();
@@ -182,6 +210,38 @@ function validateStep(step: Step, sectionName: string): void {
   if (step.hypoxic === true && (step.rest_seconds === null || step.rest_seconds < 20)) {
     throw new ValidationIssue(
       `${sectionName}.${step.step_id}: hypoxic steps must have rest_seconds >= 20`,
+    );
+  }
+  if (step.underwater === true && sectionName !== 'main_set') {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: underwater: true is only permitted on main_set steps`,
+    );
+  }
+  if (step.underwater === true && step.sendoff_seconds != null) {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: underwater steps must use rest_seconds, not sendoff_seconds`,
+    );
+  }
+  if (step.underwater === true && (step.rest_seconds === null || step.rest_seconds < 30)) {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: underwater steps must have rest_seconds >= 30`,
+    );
+  }
+  if (step.kind === 'broken') {
+    if (step.broken_pause_s === undefined || step.broken_pause_s === null || step.broken_pause_s < 5) {
+      throw new ValidationIssue(
+        `${sectionName}.${step.step_id}: broken steps must have broken_pause_s >= 5`,
+      );
+    }
+  }
+  if (step.kind === 'fartlek' && step.reps !== 1) {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: fartlek steps must have reps == 1`,
+    );
+  }
+  if (step.kind === 'time_trial' && step.reps !== 1) {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: time_trial steps must have reps == 1`,
     );
   }
   if (!step.step_id.trim()) {
