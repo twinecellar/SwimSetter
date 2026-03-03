@@ -16,6 +16,14 @@ export function buildBlueprintV2(archetype: ArchetypeContract, payload: SwimPlan
   const effort = payload.session_requested.effort;
   const duration = payload.session_requested.duration_minutes;
   const level = payload.session_requested.swim_level;
+  const requestedTags = new Set(
+    [
+      ...(payload.session_requested.requested_tags ?? []),
+      ...(payload.requested_tags ?? []),
+    ]
+      .map((t) => (t ?? "").toString().trim().toLowerCase())
+      .filter(Boolean),
+  );
 
   // Warm-up / cool-down intentionally stable for readability.
   const warm =
@@ -62,7 +70,9 @@ export function buildBlueprintV2(archetype: ArchetypeContract, payload: SwimPlan
     main = sb(mainSteps, ...same(mainSteps, archetype.allowed_main_kinds));
   } else if (archetypeId === "benchmark_lite") {
     const steadyKinds = new Set<StepKind>(["intervals", "build"]);
-    const challengeKinds = new Set<StepKind>(["broken", "time_trial"]);
+    const challengeKinds = requestedTags.has("golf")
+      ? new Set<StepKind>(["intervals"])
+      : new Set<StepKind>(["broken", "time_trial"]);
     if (duration < 35) {
       main = sb(3, steadyKinds, challengeKinds, steadyKinds);
     } else {

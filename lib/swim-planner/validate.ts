@@ -165,6 +165,7 @@ function validateStep(step: Step, sectionName: string): void {
   if (!ALLOWED_KINDS.has(step.kind)) {
     throw new ValidationIssue(`${sectionName}.${step.step_id}: invalid kind '${step.kind}'`);
   }
+  const descLower = (step.description ?? '').toLowerCase();
   if (step.kind === 'intervals' && step.reps === 1) {
     throw new ValidationIssue(
       `${sectionName}.${step.step_id}: intervals steps must have reps >= 2 (use kind 'continuous' for a single rep)`,
@@ -298,6 +299,14 @@ function validateStep(step: Step, sectionName: string): void {
   if (step.hypoxic === true && (step.rest_seconds === null || step.rest_seconds < 20)) {
     throw new ValidationIssue(
       `${sectionName}.${step.step_id}: hypoxic steps must have rest_seconds >= 20`,
+    );
+  }
+  if (
+    descLower.includes('golf') &&
+    !(step.kind === 'intervals' && step.distance_per_rep_m === 50 && step.reps >= 2)
+  ) {
+    throw new ValidationIssue(
+      `${sectionName}.${step.step_id}: GOLF scoring is only permitted on 50m intervals steps (e.g. 4 x 50m)`,
     );
   }
   if (step.underwater === true && sectionName !== 'main_set') {
@@ -643,7 +652,14 @@ function validateV2ArchetypeContract(
     let challenge = 0;
     for (const s of plan.sections.main_set.steps) {
       if (s.kind === 'broken' || s.kind === 'time_trial') challenge += 1;
-      else if ((s.description ?? '').toLowerCase().includes('golf')) challenge += 1;
+      else if (
+        (s.description ?? '').toLowerCase().includes('golf') &&
+        s.kind === 'intervals' &&
+        s.distance_per_rep_m === 50 &&
+        s.reps >= 2
+      ) {
+        challenge += 1;
+      }
     }
     if (challenge !== 1) {
       throw new ValidationIssue('v2 benchmark_lite requires exactly one challenge element step');

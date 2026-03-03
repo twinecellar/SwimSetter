@@ -74,7 +74,7 @@ function tagModifierHints(tags: string[], archetypeName: string, swimLevel: stri
     hints.push("If you include a fartlek step, describe the surge pattern plainly.");
   }
   if (requested.has("golf")) {
-    hints.push("If you include a GOLF step, explain the scoring briefly (strokes + seconds).");
+    hints.push("If you include a GOLF step, it must be 50m intervals (e.g. 4-10 x 50m). Explain scoring briefly (strokes + seconds).");
   }
   if (requested.has("time_trial")) {
     hints.push("If you include a time_trial step, treat it as top pace for that distance and cue the swimmer to note their time.");
@@ -102,9 +102,12 @@ export function buildUserPromptV2(payload: SwimPlanInput, historySummary: string
   const proportions = sectionProportionGuidance(req.effort, req.duration_minutes);
 
   const archetype = spec.archetype;
+  const hasGolfTag = requestedTags.includes("golf");
   const benchmarkRule =
     archetype.archetype_id === "benchmark_lite"
-      ? "- benchmark_lite special rule: include exactly one challenge element in main_set (kind 'time_trial' or 'broken', or a single GOLF step); all other main_set steps must be non-challenge.\n"
+      ? hasGolfTag
+        ? "- benchmark_lite special rule: include exactly one challenge element in main_set, and it must be a single GOLF step using 50m intervals; do not use time_trial/broken as the challenge when 'golf' is requested.\n"
+        : "- benchmark_lite special rule: include exactly one challenge element in main_set (kind 'time_trial' or 'broken', or a single GOLF step using 50m intervals); all other main_set steps must be non-challenge.\n"
       : "";
   const archetypeContract =
     `Selected archetype: ${archetype.display_name}\n` +
@@ -176,6 +179,7 @@ export function buildUserPromptV2(payload: SwimPlanInput, historySummary: string
     "- Allowed kind values: continuous, intervals, pyramid, descending, ascending, build, negative_split, broken, fartlek, time_trial.\n" +
     "- broken: must have broken_pause_s >= 5; description must mention pausing at the halfway wall.\n" +
     "- fartlek: reps must be 1; description must describe the surge pattern clearly.\n" +
+    "- golf: only valid as 50m intervals (kind 'intervals', distance_per_rep_m: 50, reps >= 2); do not attach GOLF scoring to time_trial/continuous.\n" +
     "- time_trial: reps must be 1; do not set rest_seconds or sendoff_seconds; this is a top-pace effort for the set distance; description should explicitly cue the swimmer to note their time.\n" +
     "- When kind is pyramid/descending/ascending: pyramid_sequence_m is required; reps must equal pyramid_sequence_m length.\n" +
     "- For pyramid/descending/ascending: if you include rest_sequence_s or sendoff_sequence_s, its length must equal pyramid_sequence_m length; do not also set rest_seconds/sendoff_seconds (prefer rest_seconds unless per-rep timing is essential).\n" +
@@ -192,9 +196,12 @@ export function buildUserPromptV2(payload: SwimPlanInput, historySummary: string
 
 export function buildRepairPromptV2(originalText: string, errorText: string, spec: GenerationSpecV2): string {
   const archetype = spec.archetype;
+  const hasGolfTag = (spec.requested_tags ?? []).includes("golf");
   const benchmarkRepairRule =
     archetype.archetype_id === "benchmark_lite"
-      ? "- benchmark_lite requires exactly one challenge element in main_set (kind 'time_trial' or 'broken', or one GOLF step)\n"
+      ? hasGolfTag
+        ? "- benchmark_lite requires exactly one challenge element in main_set, and it must be one GOLF step using 50m intervals\n"
+        : "- benchmark_lite requires exactly one challenge element in main_set (kind 'time_trial' or 'broken', or one GOLF step using 50m intervals)\n"
       : "";
   return (
     "Your previous response was invalid.\n\n" +
@@ -209,6 +216,7 @@ export function buildRepairPromptV2(originalText: string, errorText: string, spe
     `- allowed main_set kinds: ${JSON.stringify([...archetype.allowed_main_kinds].sort())}\n` +
     "- intervals must have reps >= 2 (if reps == 1, use another valid kind).\n" +
     "- build and negative_split must have reps == 1 (negative_split also requires split_instruction).\n" +
+    "- golf scoring is only valid on 50m intervals: kind 'intervals', distance_per_rep_m: 50, reps >= 2.\n" +
     "- time_trial must have reps == 1, with no rest_seconds/sendoff_seconds.\n" +
     benchmarkRepairRule +
     "- Follow the locked blueprint exactly (do not change step counts).\n" +
