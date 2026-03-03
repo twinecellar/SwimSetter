@@ -9,7 +9,7 @@ interface CompletionFormProps {
   children?: React.ReactNode;
 }
 
-const SUGGESTED_TAGS = ["fun", "easy", "hard", "long", "short"];
+const SUGGESTED_TAGS = ["fun", "easy", "long", "short"];
 
 type Rating = 1 | 0;
 

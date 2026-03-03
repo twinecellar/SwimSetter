@@ -33,6 +33,12 @@ export interface HistoricSession {
   session_plan: {
     duration_minutes: number;
     estimated_distance_m: number;
+    sections?: {
+      main_set?: {
+        title?: string;
+        steps?: unknown[];
+      };
+    };
   };
   thumb: 0 | 1;
   tags: string[];

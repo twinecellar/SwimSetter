@@ -23,7 +23,18 @@ export const REQUESTED_TAG_OPTIONS = [
   "time_trial",
 ] as const;
 
-const REQUESTED_TAG_SET = new Set<string>(REQUESTED_TAG_OPTIONS);
+// UI chips intentionally remain stable; the API can accept additional tags as the
+// planner evolves (e.g. v2 archetypes / safety flags).
+export const REQUESTED_TAG_ALLOWLIST = [
+  ...REQUESTED_TAG_OPTIONS,
+  "sprints",
+  "hypoxic",
+  "underwater",
+  "choice",
+  "benchmark",
+] as const;
+
+const REQUESTED_TAG_SET = new Set<string>(REQUESTED_TAG_ALLOWLIST);
 const DURATION_SET = new Set<number>(DURATION_MINUTES_OPTIONS);
 
 export function isDurationMinutes(value: number): value is DurationMinutes {

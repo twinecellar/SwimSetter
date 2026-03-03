@@ -20,10 +20,6 @@ export const SYSTEM_PROMPT =
 // ── Schema example (mirrors _schema_excerpt() in Python) ─────────────────────
 
 export function schemaExcerpt(): string {
-  // TODO: validator — update validate.ts to accept new step kinds: pyramid, descending,
-  // ascending, build, negative_split. Validate pyramid_sequence_m (present when required,
-  // all values multiples of 50, sum == step distance contribution, reps == length).
-  // Also accept optional hypoxic and split_instruction fields on steps.
   const example = {
     plan_id: 'uuid',
     created_at: 'ISO-8601 datetime',
@@ -362,7 +358,7 @@ const TAG_HINT_MAP: Record<string, string> = {
     'drive off the wall and maintaining stroke rate to the flags.',
   hypoxic:
     'Include 1-2 hypoxic steps in the main set. Mark these with hypoxic: true. ' +
-    'Reduce breathing frequency (every 5, 7, or 9 strokes) or hold breath for a full length. ' +
+    'Reduce breathing frequency (every 5, 7, or 9 strokes) or hold breath for part of the length. ' +
     'Use short distances (50m per rep) and generous rest (30-45s). ' +
     'Descriptions must clearly state the breathing pattern. Never use hypoxic on warm-up or cool-down steps.',
 };
@@ -378,7 +374,7 @@ function requestedTagHints(requestedTags: string[]): string {
 
 // ── Swim level guidance ───────────────────────────────────────────────────────
 
-function swimLevelHint(level: string): string {
+export function swimLevelHint(level: string): string {
   const map: Record<string, string> = {
     beginner:
       'This swimmer is new to structured swim training. ' +
@@ -412,12 +408,12 @@ function effortHint(effort: string): string {
     easy:
       'Aerobic recovery pace — all steps should feel comfortable throughout. ' +
       'Warm-up: 1-2 easy continuous swims (100-200m each). ' +
-      'Main set: longer repeats (100-200m each) or continuous swimming with 15-30s rest. ' +
+      'Main set: longer repeats (100-200m each) or continuous swimming with 20-30s rest. ' +
       'Cool-down: very easy choice of stroke. No intensity spikes anywhere.',
     medium:
       'Steady work at a comfortably challenging pace the swimmer can sustain. ' +
       'Warm-up: easy continuous build, optionally ending with 4×50m progressive activation. ' +
-      'Main set: 100-200m repeats with 15-30s rest, or longer sustained efforts. ' +
+      'Main set: 50-100-200m repeats with 15-30s rest, or longer sustained efforts, or sets off time duration. ' +
       'Cool-down: easy relaxed swimming.',
     hard:
       'High-intensity training. ' +
@@ -433,7 +429,7 @@ function effortHint(effort: string): string {
 
 // ── Distance guidance ─────────────────────────────────────────────────────────
 
-function distanceGuidance(durationMinutes: number, effort: string): string {
+export function distanceGuidance(durationMinutes: number, effort: string): string {
   const paceByEffort: Record<string, [number, number]> = {
     easy: [25, 35],
     medium: [30, 40],
@@ -450,7 +446,7 @@ function distanceGuidance(durationMinutes: number, effort: string): string {
 
 // ── Section proportion guidance ───────────────────────────────────────────────
 
-function sectionProportionGuidance(effort: string, durationMinutes: number): string {
+export function sectionProportionGuidance(effort: string, durationMinutes: number): string {
   const paceByEffort: Record<string, [number, number]> = {
     easy: [25, 35],
     medium: [30, 40],

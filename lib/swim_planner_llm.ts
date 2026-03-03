@@ -1,5 +1,6 @@
 import { generateSwimPlan } from './swim-planner/generate';
 import type { SwimPlanInput } from './swim-planner/types';
+import type { GenerationSpecV2 } from './swim-planner/v2/types';
 
 // ── Public types (unchanged — consumed by app/api/plans/generate/route.ts) ────
 
@@ -14,6 +15,11 @@ export interface SwimPlannerHistoricSession {
   session_plan: {
     duration_minutes: number;
     estimated_distance_m: number;
+    sections?: {
+      main_set?: {
+        title?: string;
+      };
+    };
   };
   thumb: 0 | 1;
   tags: string[];
@@ -45,6 +51,7 @@ export interface SwimPlannerStep {
   paddles?: boolean | null;
   broken_pause_s?: number | null;
   target_time_s?: number | null;
+  split_instruction?: string | null;
 }
 
 export interface SwimPlannerSection {
@@ -69,12 +76,12 @@ export interface SwimPlannerResponse {
 
 export async function runSwimPlannerLLM(
   payload: SwimPlannerPayload,
-): Promise<SwimPlannerResponse> {
+): Promise<{ plan: SwimPlannerResponse; spec: GenerationSpecV2 }> {
   const input: SwimPlanInput = {
     session_requested: payload.session_requested,
     historic_sessions: payload.historic_sessions,
     requested_tags: payload.requested_tags,
   };
-  const plan = await generateSwimPlan(input);
-  return plan as SwimPlannerResponse;
+  const { plan, spec } = await generateSwimPlan(input);
+  return { plan: plan as SwimPlannerResponse, spec };
 }

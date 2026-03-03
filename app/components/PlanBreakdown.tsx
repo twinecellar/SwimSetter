@@ -34,10 +34,65 @@ function parseDescription(description: string): { title: string; cue: string | n
   return { title: description.slice(0, idx), cue: description.slice(idx + 3) };
 }
 
+function extractInlineTimingAndBadges(title: string): {
+  title: string;
+  timing: string | null;
+  badges: string[];
+} {
+  let cleaned = title.trim();
+  let timing: string | null = null;
+
+  const timingPatterns = [
+    /\s@ \[[^\]]+\](?:s rest)?/,
+    /\s@ \d+:\d{2}/,
+    /\s@ \d+s rest/,
+  ];
+
+  for (const pattern of timingPatterns) {
+    const match = cleaned.match(pattern);
+    if (!match) continue;
+    timing = match[0].trim();
+    const idx = match.index ?? -1;
+    if (idx >= 0) {
+      const left = cleaned.slice(0, idx).trim();
+      const right = cleaned.slice(idx + match[0].length).trim();
+      cleaned = [left, right].filter(Boolean).join(" ");
+    }
+    break;
+  }
+
+  const badges: string[] = [];
+  const badgeMatch = cleaned.match(/\[([^[\]]+)\]\s*$/);
+  if (badgeMatch) {
+    badges.push(
+      ...badgeMatch[1]
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    );
+    cleaned = cleaned.slice(0, badgeMatch.index).trim();
+  }
+
+  const displayTiming = (() => {
+    if (!timing) return null;
+    const restSeq = timing.match(/^@ \[([^\]]+)\]s rest$/);
+    if (restSeq) return `${restSeq[1].split("-").join("/")}s rest`;
+    const sendoffSeq = timing.match(/^@ \[([^\]]+)\]$/);
+    if (sendoffSeq) return `@ ${sendoffSeq[1].split("-").join("/")}`;
+    return timing;
+  })();
+
+  return { title: cleaned, timing: displayTiming, badges };
+}
+
 function SegmentRow({ segment, isLast }: { segment: PlanSegment; isLast: boolean }) {
   const borderColor = EFFORT_LEFT_BORDER[segment.effort as Effort] ?? "var(--fog-dark)";
-  const rest = formatSendoff(segment.sendoff_seconds) ?? formatRest(segment.rest_seconds);
-  const { title, cue } = parseDescription(segment.description);
+  const { title: rawTitle, cue } = parseDescription(segment.description);
+  const parsed = extractInlineTimingAndBadges(rawTitle);
+  const rest =
+    formatSendoff(segment.sendoff_seconds) ??
+    formatRest(segment.rest_seconds) ??
+    parsed.timing;
 
   return (
     <div style={{
@@ -52,16 +107,45 @@ function SegmentRow({ segment, isLast }: { segment: PlanSegment; isLast: boolean
           fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
           lineHeight: 1.4,
         }}>
-          {title}
+          {parsed.title}
         </span>
-        {rest && (
+        {(rest || parsed.badges.length > 0) && (
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexShrink: 0,
+            marginTop: '1px',
+          }}>
+          {rest && (
           <span style={{
             background: 'var(--fog-dark)', color: 'var(--ink-soft)',
             borderRadius: '100px', padding: '4px 10px',
             fontFamily: 'var(--font-dm-sans)', fontSize: '12px', fontWeight: 500,
-            flexShrink: 0, whiteSpace: 'nowrap',
+            whiteSpace: 'nowrap',
           }}>
             {rest}
+          </span>
+          )}
+          {parsed.badges.map((badge) => (
+            <span
+              key={`${segment.id}-${badge}`}
+              style={{
+                background: 'rgba(20, 138, 153, 0.08)',
+                color: 'var(--water)',
+                border: '1px solid rgba(20, 138, 153, 0.2)',
+                borderRadius: '100px',
+                padding: '4px 8px',
+                fontFamily: 'var(--font-dm-sans)',
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'capitalize',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {badge}
+            </span>
+          ))}
           </span>
         )}
       </div>

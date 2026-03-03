@@ -28,6 +28,9 @@ export interface GeneratedPlan {
     version: string;
     swim_level: string;
     input_effort: Effort;
+    archetype_id?: string;
+    archetype_name?: string;
+    forced_by_tags?: boolean;
   };
 }
 

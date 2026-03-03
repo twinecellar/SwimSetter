@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { getUserWithRateLimitHandling } from '@/lib/supabase/auth';
+import { createClient } from '@supabase/supabase-js';
+import { isAuthRateLimitError } from '@/lib/supabase/auth';
 import type { Effort, GeneratedPlan, PlanRequest, PlanSegment } from '@/lib/plan-types';
 import {
   findInvalidRequestedTags,
@@ -11,6 +11,36 @@ import {
 import { runSwimPlannerLLM, type SwimPlannerPayload } from '@/lib/swim_planner_llm';
 
 export const runtime = 'nodejs';
+
+const MOBILE_LIMIT_MAX_REQUESTS = 20;
+const MOBILE_LIMIT_WINDOW_MS = 60_000;
+
+type LimitEntry = { count: number; resetAt: number };
+const mobileLimitStore = new Map<string, LimitEntry>();
+
+function extractBearerToken(request: Request): string | null {
+  const auth = request.headers.get('authorization') ?? request.headers.get('Authorization');
+  if (!auth) return null;
+  const [scheme, token] = auth.split(' ');
+  if (!scheme || !token || scheme.toLowerCase() !== 'bearer') return null;
+  return token.trim();
+}
+
+function isRateLimited(subject: string): boolean {
+  const now = Date.now();
+  const current = mobileLimitStore.get(subject);
+
+  if (!current || now >= current.resetAt) {
+    mobileLimitStore.set(subject, { count: 1, resetAt: now + MOBILE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (current.count >= MOBILE_LIMIT_MAX_REQUESTS) return true;
+
+  current.count += 1;
+  mobileLimitStore.set(subject, current);
+  return false;
+}
 
 function getLLMFailureResponse(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '');
@@ -44,18 +74,52 @@ function getLLMFailureResponse(error: unknown) {
 }
 
 export async function POST(request: Request) {
-  const supabase = createSupabaseServerClient();
-  const { user, rateLimited } = await getUserWithRateLimitHandling(supabase);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (rateLimited) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json(
-      { error: 'Too many auth requests', code: 'OVER_REQUEST_RATE_LIMIT' },
-      { status: 429 }
+      { error: 'Supabase is not configured on server' },
+      { status: 500 }
     );
   }
 
+  const accessToken = extractBearerToken(request);
+  if (!accessToken) {
+    return NextResponse.json(
+      { error: 'Missing bearer token' },
+      { status: 401 }
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+      },
+    },
+  });
+
+  const { data: authData, error: authError } = await supabase.auth.getUser(accessToken);
+
+  if (authError) {
+    const status = isAuthRateLimitError(authError) ? 429 : 401;
+    return NextResponse.json(
+      { error: status === 429 ? 'Too many auth requests' : 'Unauthorized' },
+      { status }
+    );
+  }
+
+  const user = authData.user;
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (isRateLimited(user.id)) {
+    return NextResponse.json(
+      { error: 'Too many generate requests', code: 'RATE_LIMITED' },
+      { status: 429 }
+    );
   }
 
   const rawBody = await request.json();
