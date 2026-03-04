@@ -67,6 +67,7 @@ export async function POST(request: Request) {
     duration_minutes?: number;
     effort?: Effort;
     requested_tags?: unknown;
+    regen_attempt?: unknown;
   };
 
   if (Object.prototype.hasOwnProperty.call(body, 'fun_mode')) {
@@ -106,6 +107,19 @@ export async function POST(request: Request) {
   const requestedTags = normalizeRequestedTags(body.requested_tags);
   const effort = rawEffort as Effort;
   const durationMinutes = rawDuration as PlanRequest['duration_minutes'];
+
+  const rawRegenAttempt = body.regen_attempt;
+  let regenAttempt = 0;
+  if (rawRegenAttempt != null) {
+    const n = typeof rawRegenAttempt === 'number' ? rawRegenAttempt : Number(rawRegenAttempt);
+    if (!Number.isFinite(n) || Math.floor(n) !== n || n < 0 || n > 50) {
+      return NextResponse.json(
+        { error: 'regen_attempt must be an integer between 0 and 50' },
+        { status: 400 },
+      );
+    }
+    regenAttempt = n;
+  }
 
   const [{ data: profileRow }, { data: completions }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
@@ -201,6 +215,7 @@ export async function POST(request: Request) {
       })
       .filter((v): v is HistoricSessionPayload => v !== null)),
     requested_tags: [],
+    regen_attempt: regenAttempt,
   };
 
   const PYRAMID_KINDS = new Set(['pyramid', 'descending', 'ascending']);

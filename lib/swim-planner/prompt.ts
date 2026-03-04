@@ -406,62 +406,114 @@ export function swimLevelHint(level: string): string {
 function effortHint(effort: string): string {
   const map: Record<string, string> = {
     easy:
-      'Aerobic recovery pace — all steps should feel comfortable throughout. ' +
-      'Warm-up: 1-2 easy continuous swims (100-200m each). ' +
-      'Main set: longer repeats (100-200m each) or continuous swimming with 20-30s rest. ' +
-      'Cool-down: very easy choice of stroke. No intensity spikes anywhere.',
-    medium:
-      'Steady work at a comfortably challenging pace the swimmer can sustain. ' +
-      'Warm-up: easy continuous build, optionally ending with 4×50m progressive activation. ' +
-      'Main set: 50-100-200m repeats with 15-30s rest, or longer sustained efforts, or sets off time duration. ' +
-      'Cool-down: easy relaxed swimming.',
-    hard:
-      'High-intensity training. ' +
-      'Warm-up is critical: include an easy build and a brief activation piece ' +
-      '(e.g. 4-6×50m at medium effort) before the main set. ' +
-      'Main set: short-to-medium repeats (50-100m each) with adequate rest (20-45s) to ' +
-      'preserve quality across all reps — quality over volume. ' +
-      'Total session volume should be lower than an equivalent easy or medium session. ' +
-      'Cool-down: minimum 100m of easy continuous swimming.',
-  };
-  return map[effort] ?? 'Use balanced effort progression across sections.';
-}
+      'Easy effort. Reflect this primarily through longer total distance, longer repeat lengths, and more generous recovery. ' +
+      'Warm-up: simple and relaxed, usually 1-2 easy continuous swims. ' +
+      'Main set: favour longer repeats or continuous swimming, typically 100-200m repeats or sustained blocks. ' +
+      'Use generous rest when intervals are used, typically around 20-30s, and avoid dense or aggressive interval patterns. ' +
+      'Estimated total distance should sit towards the higher end of the allowed range for the requested duration. ' +
+      'Cool-down: very easy and unhurried. No sharp intensity changes anywhere.',
 
+    medium:
+      'Medium effort. Reflect this through moderate total distance, moderate repeat lengths, and controlled but not excessive rest. ' +
+      'Warm-up: easy and progressive, optionally finishing with a short activation piece. ' +
+      'Main set: favour moderate repeat lengths, typically 100-150m repeats, with some 50m or 200m repeats where they fit the session shape. ' +
+      'Use moderate rest, typically around 15-25s for standard intervals, so the swimmer keeps moving without the set becoming rushed. ' +
+      'Estimated total distance should sit near the middle of the allowed range for the requested duration. ' +
+      'Cool-down: easy relaxed swimming.',
+
+    hard:
+      'Hard effort. Reflect this primarily through shorter total distance, shorter repeat lengths, and tighter recovery that still preserves quality. ' +
+      'Warm-up is important: include an easy build and a short activation piece before the main set. ' +
+      'Main set: favour shorter repeats, typically 50-100m, so the swimmer can hold stronger effort with good form. ' +
+      'Use shorter rest to keep the set dense, typically around 10-20s for controlled hard work, or 20-45s when the repeats are very demanding and quality must stay high. ' +
+      'Estimated total distance should sit towards the lower end of the allowed range for the requested duration. ' +
+      'Cool-down: include at least 100m of easy continuous swimming.',
+  };
+
+  return (
+    map[effort] ??
+    'Reflect effort mainly through rest duration, repeat length, and total distance: easier = longer distance and longer repeats with more recovery; harder = shorter distance and shorter repeats with tighter recovery.'
+  );
+}
 // ── Distance guidance ─────────────────────────────────────────────────────────
 
 export function distanceGuidance(durationMinutes: number, effort: string): string {
-  const paceByEffort: Record<string, [number, number]> = {
-    easy: [25, 35],
-    medium: [30, 40],
-    hard: [35, 45],
+  // Metres-per-minute guidance is about *typical total volume* for the session,
+  // not the swimmer's instantaneous speed.
+  // Easy sessions can carry more volume; hard sessions are usually lower volume.
+  const ppmByEffort: Record<string, [number, number]> = {
+    easy: [32, 42],    // higher volume, smoother pacing
+    medium: [28, 38],  // mid volume
+    hard: [22, 32],    // lower volume, more rest + quality focus
   };
-  const [loPpm, hiPpm] = paceByEffort[effort] ?? [30, 40];
-  const lo = durationMinutes * loPpm;
-  const hi = durationMinutes * hiPpm;
+
+  const [loPpm, hiPpm] = ppmByEffort[effort] ?? [28, 38];
+
+  const roundTo50 = (m: number) => Math.round(m / 50) * 50;
+
+  const lo = roundTo50(durationMinutes * loPpm);
+  const hi = roundTo50(durationMinutes * hiPpm);
+
   return (
     `Target estimated_distance_m for this request: ${lo}-${hi}m ` +
-    `(derived from duration=${durationMinutes} and effort=${effort}).`
+    `(derived from duration=${durationMinutes} and effort=${effort}; ` +
+    `easy tends to be higher-volume, hard tends to be lower-volume).`
   );
 }
 
 // ── Section proportion guidance ───────────────────────────────────────────────
 
 export function sectionProportionGuidance(effort: string, durationMinutes: number): string {
-  const paceByEffort: Record<string, [number, number]> = {
-    easy: [25, 35],
-    medium: [30, 40],
-    hard: [35, 45],
+  // Metres-per-minute guidance represents typical *total volume* for the session.
+  // Easy sessions can be higher volume; hard sessions are typically lower volume.
+  const ppmByEffort: Record<string, [number, number]> = {
+    easy: [32, 42],
+    medium: [28, 38],
+    hard: [22, 32],
   };
-  const [loPpm, hiPpm] = paceByEffort[effort] ?? [30, 40];
-  const target = Math.round((durationMinutes * (loPpm + hiPpm)) / 2 / 50) * 50;
 
-  const warmFrac = effort === 'easy' ? 0.22 : effort === 'medium' ? 0.20 : 0.22;
-  const coolFrac = effort === 'easy' ? 0.16 : effort === 'medium' ? 0.13 : 0.10;
+  const [loPpm, hiPpm] = ppmByEffort[effort] ?? [28, 38];
 
-  const warm = Math.max(Math.round((target * warmFrac) / 50) * 50, 50);
-  const cool = Math.max(Math.round((target * coolFrac) / 50) * 50, 50);
+  const roundTo50 = (m: number) => Math.round(m / 50) * 50;
+
+  // Use midpoint of the effort band as a suggested total target.
+  const target = roundTo50(durationMinutes * (loPpm + hiPpm) / 2);
+
+  // Proportions reflect that harder sessions need more preparation and a real cool-down,
+  // while the main set volume is relatively tighter.
+  const warmFrac = effort === 'easy' ? 0.20 : effort === 'medium' ? 0.22 : 0.28;
+  const coolFrac = effort === 'easy' ? 0.14 : effort === 'medium' ? 0.14 : 0.14;
+
+  const warm = Math.max(roundTo50(target * warmFrac), 100);
+  const cool = Math.max(roundTo50(target * coolFrac), 100);
+
   let main = target - warm - cool;
-  if (main < 50) main = 50;
+
+  // Ensure main_set remains meaningful, but do not violate total.
+  if (main < 100) {
+    // Borrow from warm-up first, then cool-down, but keep minimums.
+    const deficit = 100 - main;
+
+    const warmMin = 100;
+    const coolMin = 100;
+
+    const warmSlack = Math.max(0, warm - warmMin);
+    const takeFromWarm = Math.min(warmSlack, deficit);
+    const newWarm = warm - takeFromWarm;
+
+    const remaining = deficit - takeFromWarm;
+    const coolSlack = Math.max(0, cool - coolMin);
+    const takeFromCool = Math.min(coolSlack, remaining);
+    const newCool = cool - takeFromCool;
+
+    main = target - newWarm - newCool;
+
+    return (
+      `Suggested section distances for this session (all must be exact multiples of 50m): ` +
+      `warm_up ~${newWarm}m, main_set ~${main}m, cool_down ~${newCool}m ` +
+      `(total ~${newWarm + main + newCool}m).`
+    );
+  }
 
   return (
     `Suggested section distances for this session (all must be exact multiples of 50m): ` +
@@ -475,7 +527,7 @@ export function sectionProportionGuidance(effort: string, durationMinutes: numbe
 function styleHint(preferVaried: boolean): string {
   if (preferVaried) {
     return (
-      'Inferred preferred style is varied. Build a main set with 2-3 distinct steps using different formats — ' +
+      'Inferred preferred style is varied. Build a main set with 2-5 distinct steps using different formats — ' +
       'consider pyramids, descending sets, builds, or negative splits alongside standard intervals. ' +
       'Preserve schema consistency.'
     );

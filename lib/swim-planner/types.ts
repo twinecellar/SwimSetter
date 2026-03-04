@@ -48,6 +48,12 @@ export interface SwimPlanInput {
   session_requested: SessionRequested;
   historic_sessions: HistoricSession[];
   requested_tags: string[];
+  /**
+   * Optional reroll counter (0,1,2...).
+   * - 0: normal generation
+   * - >=1: regenerate mode (more variety), with deterministic odd/even alternation
+   */
+  regen_attempt?: number;
 }
 
 // ── Lenient draft types (for parsing raw LLM output) ─────────────────────────

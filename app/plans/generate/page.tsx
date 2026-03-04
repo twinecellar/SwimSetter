@@ -17,6 +17,7 @@ export default function GeneratePlanPage() {
   });
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [generatedRequest, setGeneratedRequest] = useState<PlanRequest | null>(null);
+  const [regenAttempt, setRegenAttempt] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,10 +56,15 @@ export default function GeneratePlanPage() {
     setError(null);
 
     try {
+      const keyFor = (r: PlanRequest) =>
+        `${r.duration_minutes}|${r.effort}|${normalizeRequestedTags(r.requested_tags).join(",")}`;
+      const continuingReroll = Boolean(plan && generatedRequest && keyFor(generatedRequest) === keyFor(request));
+      const attemptToSend = continuingReroll ? regenAttempt + 1 : 0;
+
       const response = await fetch("/api/plans/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
+        body: JSON.stringify({ ...request, regen_attempt: attemptToSend }),
       });
 
       if (!response.ok) {
@@ -75,6 +81,7 @@ export default function GeneratePlanPage() {
       const json = (await response.json()) as { plan: GeneratedPlan; request: PlanRequest };
       setPlan(json.plan);
       setGeneratedRequest(json.request);
+      setRegenAttempt(attemptToSend);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

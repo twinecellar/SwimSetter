@@ -105,6 +105,12 @@ export function buildGenerationSpecV2(payload: SwimPlanInput): GenerationSpecV2 
   const tagsList = mergedRequestedTags(payload);
   const requestedTags = new Set(tagsList);
 
+  const regenAttemptRaw = payload.regen_attempt;
+  const regenAttempt =
+    typeof regenAttemptRaw === "number" && Number.isFinite(regenAttemptRaw)
+      ? Math.max(0, Math.floor(regenAttemptRaw))
+      : 0;
+
   let [archetypeId, forcedByTags] = routeArchetypeId(payload, requestedTags);
 
   const sensitive = hasSensitiveDownFeedback(payload.historic_sessions ?? []);
@@ -121,7 +127,7 @@ export function buildGenerationSpecV2(payload: SwimPlanInput): GenerationSpecV2 
   archetypeId = rotateIfRepeating(archetypeId, { lastArchetypeId: last, forcedByTags });
 
   const archetype = ARCHETYPES[archetypeId];
-  const blueprint = buildBlueprintV2(archetype, payload);
+  const blueprint = buildBlueprintV2(archetype, payload, { regenerate: regenAttempt > 0, regenAttempt });
 
   return {
     archetype,

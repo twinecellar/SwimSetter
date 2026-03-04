@@ -29,6 +29,7 @@ export interface SwimPlannerPayload {
   session_requested: SwimPlannerSessionRequested;
   historic_sessions: SwimPlannerHistoricSession[];
   requested_tags: string[];
+  regen_attempt?: number;
 }
 
 export interface SwimPlannerStep {
@@ -81,6 +82,7 @@ export async function runSwimPlannerLLM(
     session_requested: payload.session_requested,
     historic_sessions: payload.historic_sessions,
     requested_tags: payload.requested_tags,
+    regen_attempt: payload.regen_attempt,
   };
   const { plan, spec } = await generateSwimPlan(input);
   return { plan: plan as SwimPlannerResponse, spec };
